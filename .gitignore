@@ -1,0 +1,40 @@
+# Python cache
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+
+# Virtual environments
+.venv/
+venv/
+env/
+
+# IDE settings
+.vscode/
+.idea/
+
+# System files
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+
+# Local databases
+*.db
+*.sqlite
+*.sqlite3
+
+# Generated model files
+saved_models/*.joblib
+saved_models/*.pkl
+
+# Generated data
+data/processed/
+data/output/
+
+# Office temporary files
+~$*.doc
+~$*.docx
+~$*.xlsx
+*.tmp

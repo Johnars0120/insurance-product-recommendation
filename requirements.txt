@@ -1,0 +1,14 @@
+fastapi
+uvicorn[standard]
+jinja2
+python-multipart
+pandas
+openpyxl
+numpy
+scikit-learn
+joblib
+sqlalchemy
+pydantic
+matplotlib
+pytest
+httpx
