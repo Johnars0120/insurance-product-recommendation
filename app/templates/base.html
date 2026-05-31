@@ -1,0 +1,27 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>{% block title %}保险产品智能推荐系统{% endblock %}</title>
+    <link rel="stylesheet" href="/static/css/main.css">
+</head>
+<body>
+    <header class="app-header">
+        <div class="shell header-inner">
+            <a class="brand" href="/">保险产品智能推荐系统</a>
+            <nav class="nav" aria-label="主导航">
+                <a class="{% if active_page == 'home' %}active{% endif %}" href="/">首页</a>
+                <a class="{% if active_page == 'data' %}active{% endif %}" href="/data">数据</a>
+                <a class="{% if active_page == 'train' %}active{% endif %}" href="/train">训练</a>
+                <a class="{% if active_page == 'evaluate' %}active{% endif %}" href="/evaluate">评估</a>
+                <a class="{% if active_page == 'recommend' %}active{% endif %}" href="/recommend">推荐</a>
+                <a href="/docs">API 文档</a>
+            </nav>
+        </div>
+    </header>
+    <main class="shell page">
+        {% block content %}{% endblock %}
+    </main>
+</body>
+</html>

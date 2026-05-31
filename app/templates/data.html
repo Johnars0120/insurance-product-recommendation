@@ -1,0 +1,46 @@
+{% extends "base.html" %}
+
+{% block title %}数据概览 - 保险产品智能推荐系统{% endblock %}
+
+{% block content %}
+<section class="page-heading">
+    <p class="eyebrow">Dataset</p>
+    <h1>数据概览</h1>
+    <p>目标字段：<strong>{{ profile.target_column }}</strong>；特征字段 {{ profile.feature_columns | length }} 个。</p>
+</section>
+
+<section class="grid cols-2">
+    <article class="card">
+        <span class="card-label">训练集</span>
+        <h2>{{ profile.train.file }}</h2>
+        <dl class="metrics">
+            <div><dt>样本数</dt><dd>{{ profile.train.rows }}</dd></div>
+            <div><dt>字段数</dt><dd>{{ profile.train.columns }}</dd></div>
+            <div><dt>正样本</dt><dd>{{ profile.train.positive_count }}</dd></div>
+            <div><dt>负样本</dt><dd>{{ profile.train.negative_count }}</dd></div>
+            <div><dt>正样本比例</dt><dd>{{ "%.2f%%" | format(profile.train.positive_rate * 100) }}</dd></div>
+            <div><dt>缺失值</dt><dd>{{ profile.train.missing_value_count }}</dd></div>
+        </dl>
+    </article>
+    <article class="card">
+        <span class="card-label">评估集</span>
+        <h2>{{ profile.eval.file }}</h2>
+        <dl class="metrics">
+            <div><dt>样本数</dt><dd>{{ profile.eval.rows }}</dd></div>
+            <div><dt>字段数</dt><dd>{{ profile.eval.columns }}</dd></div>
+            <div><dt>正样本</dt><dd>{{ profile.eval.positive_count }}</dd></div>
+            <div><dt>负样本</dt><dd>{{ profile.eval.negative_count }}</dd></div>
+            <div><dt>正样本比例</dt><dd>{{ "%.2f%%" | format(profile.eval.positive_rate * 100) }}</dd></div>
+            <div><dt>缺失值</dt><dd>{{ profile.eval.missing_value_count }}</dd></div>
+        </dl>
+    </article>
+</section>
+
+<section class="panel">
+    <div class="section-title">
+        <h2>接口</h2>
+        <code>GET /api/datasets/profile</code>
+    </div>
+    <p>该接口返回本页使用的基础统计信息，供前端展示和报告截图使用。</p>
+</section>
+{% endblock %}
