@@ -1,0 +1,39 @@
+{% extends "base.html" %}
+
+{% block title %}推荐预测 - 保险产品智能推荐系统{% endblock %}
+
+{% block content %}
+<section class="page-heading">
+    <p class="eyebrow">Recommendation</p>
+    <h1>推荐预测</h1>
+    <p>推荐结果由预测 API 生成，包含客户编号、购买概率、推荐等级和推荐理由。</p>
+</section>
+
+<section class="grid cols-2">
+    <article class="card">
+        <span class="card-label">预测接口</span>
+        <h2>POST /api/recommend/predict</h2>
+        <pre><code>{
+  "limit": 5
+}</code></pre>
+    </article>
+    <article class="card">
+        <span class="card-label">返回字段</span>
+        <h2>推荐结果结构</h2>
+        <ul class="plain-list">
+            <li><code>customer_id</code>：客户编号或评估数据行号</li>
+            <li><code>probability</code>：预测购买概率</li>
+            <li><code>recommend_level</code>：high、medium、low</li>
+            <li><code>reason</code>：简短推荐理由</li>
+        </ul>
+    </article>
+</section>
+
+<section class="panel">
+    <div class="section-title">
+        <h2>页面说明</h2>
+        <a class="text-link" href="/docs">打开 API 文档</a>
+    </div>
+    <p class="empty">本页不在 GET 请求中自动预测，避免首次打开页面时隐式训练模型。请通过 API 文档或客户端明确提交预测请求。</p>
+</section>
+{% endblock %}

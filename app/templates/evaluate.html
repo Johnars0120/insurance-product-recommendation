@@ -1,0 +1,27 @@
+{% extends "base.html" %}
+
+{% block title %}模型评估 - 保险产品智能推荐系统{% endblock %}
+
+{% block content %}
+<section class="page-heading">
+    <p class="eyebrow">Evaluation</p>
+    <h1>模型评估</h1>
+    <p>展示最近一次训练运行的 Accuracy、Precision、Recall、F1 与 AUC。</p>
+</section>
+
+<section class="panel">
+    <div class="section-title">
+        <h2>评估指标</h2>
+        <a class="text-link" href="/api/models/evaluate">评估 API</a>
+    </div>
+    {% if latest_run %}
+    <dl class="metrics metrics-wide">
+        {% for key, value in latest_run.metrics.items() %}
+        <div><dt>{{ key }}</dt><dd>{{ "%.4f" | format(value) }}</dd></div>
+        {% endfor %}
+    </dl>
+    {% else %}
+    <p class="empty">暂无评估结果。请先通过 <code>POST /api/models/train</code> 完成一次模型训练。</p>
+    {% endif %}
+</section>
+{% endblock %}

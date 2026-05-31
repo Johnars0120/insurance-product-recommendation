@@ -1,0 +1,51 @@
+{% extends "base.html" %}
+
+{% block title %}首页 - 保险产品智能推荐系统{% endblock %}
+
+{% block content %}
+<section class="page-heading">
+    <p class="eyebrow">Phase 1 MVP</p>
+    <h1>保险产品智能推荐系统</h1>
+    <p>面向课程实践的轻量级运营控制台，当前支持数据概览、逻辑回归训练、模型评估和推荐预测 API。</p>
+</section>
+
+<section class="grid cols-4" aria-label="功能入口">
+    <a class="card link-card" href="/data">
+        <span class="card-label">数据概览</span>
+        <strong>查看训练集与评估集统计</strong>
+        <span>样本数、字段数、目标列和正负样本比例。</span>
+    </a>
+    <a class="card link-card" href="/train">
+        <span class="card-label">模型训练</span>
+        <strong>触发逻辑回归训练 API</strong>
+        <span>页面只展示入口，训练由 POST 接口执行。</span>
+    </a>
+    <a class="card link-card" href="/evaluate">
+        <span class="card-label">模型评估</span>
+        <strong>查看最近一次运行指标</strong>
+        <span>Accuracy、Precision、Recall、F1 和 AUC。</span>
+    </a>
+    <a class="card link-card" href="/recommend">
+        <span class="card-label">推荐预测</span>
+        <strong>生成客户推荐等级</strong>
+        <span>通过 API 返回概率、等级和推荐理由。</span>
+    </a>
+</section>
+
+<section class="panel">
+    <div class="section-title">
+        <h2>当前运行状态</h2>
+        <a class="text-link" href="/health">健康检查</a>
+    </div>
+    {% if latest_run %}
+    <dl class="details">
+        <div><dt>模型</dt><dd>{{ latest_run.model_name }}</dd></div>
+        <div><dt>训练样本</dt><dd>{{ latest_run.train_rows }}</dd></div>
+        <div><dt>评估样本</dt><dd>{{ latest_run.eval_rows }}</dd></div>
+        <div><dt>模型文件</dt><dd>{{ latest_run.model_path }}</dd></div>
+    </dl>
+    {% else %}
+    <p class="empty">当前进程还没有训练运行记录。可在训练页面查看接口调用方式。</p>
+    {% endif %}
+</section>
+{% endblock %}
