@@ -2,6 +2,7 @@ import joblib
 import pandas as pd
 import pytest
 
+from app.database import configure_database, create_tables
 import app.services.model_service as model_service
 
 
@@ -29,6 +30,8 @@ def model_files(tmp_path, monkeypatch):
     train_data.to_excel(train_file, index=False)
     eval_data.to_excel(eval_file, index=False)
 
+    configure_database(f"sqlite:///{(tmp_path / 'model-service.db').as_posix()}")
+    create_tables()
     monkeypatch.setattr(model_service, "TRAIN_DATA_FILE", train_file)
     monkeypatch.setattr(model_service, "EVAL_DATA_FILE", eval_file)
     monkeypatch.setattr(model_service, "SAVED_MODEL_DIR", saved_model_dir)
@@ -65,11 +68,15 @@ def test_train_baseline_model_saves_predictable_joblib_bundle(model_files):
         "model_name",
         "metrics",
         "target_column",
+        "run_id",
+        "created_at",
     }
     assert bundle["feature_columns"] == model_files["feature_columns"]
     assert bundle["model_name"] == "logistic_regression"
     assert bundle["metrics"] == result["metrics"]
     assert bundle["target_column"] == model_service.TARGET_COLUMN
+    assert bundle["run_id"] == result["run_id"]
+    assert bundle["created_at"] == result["created_at"]
     assert hasattr(bundle["model"], "predict")
 
 

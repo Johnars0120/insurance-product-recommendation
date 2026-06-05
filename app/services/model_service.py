@@ -1,3 +1,6 @@
+from datetime import datetime
+from uuid import uuid4
+
 import joblib
 import pandas as pd
 from sklearn.linear_model import LogisticRegression
@@ -6,6 +9,7 @@ from sklearn.pipeline import Pipeline
 from sklearn.preprocessing import StandardScaler
 
 from app.config import EVAL_DATA_FILE, SAVED_MODEL_DIR, TARGET_COLUMN, TRAIN_DATA_FILE
+from app.services import history_service
 
 
 LATEST_RUN = None
@@ -68,6 +72,15 @@ def _latest_model_path():
     return SAVED_MODEL_DIR / "latest_model.joblib"
 
 
+def _build_run_metadata(model_name):
+    created_at = datetime.utcnow()
+    timestamp = created_at.strftime("%Y%m%d%H%M%S%f")
+    return {
+        "run_id": f"{model_name}-{timestamp}-{uuid4().hex[:8]}",
+        "created_at": created_at.isoformat(),
+    }
+
+
 def _recommend_level(probability):
     if probability >= 0.70:
         return "high"
@@ -123,6 +136,7 @@ def _validate_auc_target(eval_target):
 def train_baseline_model(model_name="logistic_regression"):
     global LATEST_RUN
 
+    run_metadata = _build_run_metadata(model_name)
     train_data, eval_data, feature_columns = _load_training_data()
     model = _build_model(model_name)
 
@@ -147,6 +161,15 @@ def train_baseline_model(model_name="logistic_regression"):
 
     SAVED_MODEL_DIR.mkdir(parents=True, exist_ok=True)
     model_path = SAVED_MODEL_DIR / "latest_model.joblib"
+    run_summary = {
+        "run_id": run_metadata["run_id"],
+        "model_name": model_name,
+        "train_rows": int(len(train_data)),
+        "eval_rows": int(len(eval_data)),
+        "metrics": metrics,
+        "model_path": str(model_path),
+        "created_at": run_metadata["created_at"],
+    }
     joblib.dump(
         {
             "model": model,
@@ -154,26 +177,24 @@ def train_baseline_model(model_name="logistic_regression"):
             "model_name": model_name,
             "metrics": metrics,
             "target_column": TARGET_COLUMN,
+            "run_id": run_summary["run_id"],
+            "created_at": run_summary["created_at"],
         },
         model_path,
     )
 
-    LATEST_RUN = {
-        "model_name": model_name,
-        "train_rows": int(len(train_data)),
-        "eval_rows": int(len(eval_data)),
-        "metrics": metrics,
-        "model_path": str(model_path),
-    }
+    LATEST_RUN = history_service.save_model_run(run_summary)
     return LATEST_RUN
 
 
 def get_latest_run():
-    return LATEST_RUN
+    if LATEST_RUN is not None:
+        return LATEST_RUN
+    return history_service.get_latest_model_run()
 
 
 def list_model_runs():
-    return [LATEST_RUN] if LATEST_RUN is not None else []
+    return history_service.list_model_runs()
 
 
 def predict_recommendations(limit=20):

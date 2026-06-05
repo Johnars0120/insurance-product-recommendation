@@ -3,6 +3,7 @@ import pandas as pd
 import pytest
 from fastapi.testclient import TestClient
 
+from app.database import configure_database, create_tables
 import app.services.model_service as model_service
 from app.main import app
 
@@ -35,6 +36,8 @@ def client_with_recommendation_files(tmp_path, monkeypatch):
     train_data.to_excel(train_file, index=False)
     eval_data.to_excel(eval_file, index=False)
 
+    configure_database(f"sqlite:///{(tmp_path / 'recommendation-history.db').as_posix()}")
+    create_tables()
     monkeypatch.setattr(model_service, "TRAIN_DATA_FILE", train_file)
     monkeypatch.setattr(model_service, "EVAL_DATA_FILE", eval_file)
     monkeypatch.setattr(model_service, "SAVED_MODEL_DIR", saved_model_dir)
