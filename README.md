@@ -67,6 +67,8 @@ insurance-product-recommendation/
 | 前端展示 | `feature/frontend` | Jinja2 页面、静态样式、ECharts 图表、推荐结果展示 |
 | 文档测试 | `feature/docs` | 开发记录、接口说明、测试记录、截图、答辩材料 |
 
+第二阶段开发请以 `codex/phase2-development` 为集成分支，并优先阅读 [docs/phase2/README.md](docs/phase2/README.md)。该目录已经按组长、后端持久化、数据算法、推荐结果、前端可视化、文档测试答辩拆分了详细开发文档。
+
 ## GitHub 协作规则
 
 1. `main` 分支只放稳定版本。
