@@ -42,6 +42,7 @@ class ModelMetricRecord(Base):
         ForeignKey("model_runs.run_id"),
         nullable=False,
         index=True,
+        unique=True,
     )
     accuracy = Column(Float, nullable=False)
     precision = Column(Float, nullable=False)

@@ -1,7 +1,7 @@
 from pathlib import Path
 from contextlib import contextmanager
 
-from sqlalchemy import create_engine
+from sqlalchemy import create_engine, event
 from sqlalchemy.orm import sessionmaker
 
 
@@ -17,10 +17,17 @@ def configure_database(database_url=DATABASE_URL):
     global _engine, SessionLocal
 
     connect_args = {}
-    if database_url.startswith("sqlite"):
+    is_sqlite = database_url.startswith("sqlite")
+    if is_sqlite:
         connect_args = {"check_same_thread": False}
 
+    if _engine is not None:
+        _engine.dispose()
+
     _engine = create_engine(database_url, connect_args=connect_args)
+    if is_sqlite:
+        event.listen(_engine, "connect", _enable_sqlite_foreign_keys)
+
     SessionLocal = sessionmaker(
         autocommit=False,
         autoflush=False,
@@ -28,6 +35,14 @@ def configure_database(database_url=DATABASE_URL):
         expire_on_commit=False,
     )
     return _engine
+
+
+def _enable_sqlite_foreign_keys(dbapi_connection, _connection_record):
+    cursor = dbapi_connection.cursor()
+    try:
+        cursor.execute("PRAGMA foreign_keys=ON")
+    finally:
+        cursor.close()
 
 
 def get_engine():
