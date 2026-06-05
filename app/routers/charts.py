@@ -17,7 +17,7 @@ def get_dataset_chart():
     profile = build_dataset_profile()
     train_summary = profile["train"]
     positive_count = int(train_summary["positive_count"])
-    negative_count = int(train_summary["rows"]) - positive_count
+    negative_count = int(train_summary["negative_count"])
 
     return {
         "series": [

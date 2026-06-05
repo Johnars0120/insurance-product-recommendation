@@ -55,6 +55,41 @@ def test_dataset_chart_api_returns_positive_negative_counts(client_with_chart_fi
     }
 
 
+def test_dataset_chart_api_ignores_missing_targets_for_negative_count(
+    tmp_path,
+    monkeypatch,
+):
+    train_data = pd.DataFrame(
+        {
+            "age": [25, 35, 45, 55],
+            model_service.TARGET_COLUMN: [0, 1, None, 0],
+        }
+    )
+    eval_data = pd.DataFrame(
+        {
+            "age": [28, 48],
+            model_service.TARGET_COLUMN: [0, 1],
+        }
+    )
+    train_file = tmp_path / "train_missing_target.xlsx"
+    eval_file = tmp_path / "eval_missing_target.xlsx"
+    train_data.to_excel(train_file, index=False)
+    eval_data.to_excel(eval_file, index=False)
+    monkeypatch.setattr(dataset_service, "TRAIN_DATA_FILE", train_file)
+    monkeypatch.setattr(dataset_service, "EVAL_DATA_FILE", eval_file)
+    client = TestClient(app)
+
+    response = client.get("/api/charts/dataset")
+
+    assert response.status_code == 200
+    assert response.json() == {
+        "series": [
+            {"name": "正样本", "value": 1},
+            {"name": "负样本", "value": 2},
+        ]
+    }
+
+
 def test_model_metrics_chart_api_returns_compare_items(client_with_chart_files):
     train_response = client_with_chart_files.post(
         "/api/models/train", json={"model_name": "logistic_regression"}
