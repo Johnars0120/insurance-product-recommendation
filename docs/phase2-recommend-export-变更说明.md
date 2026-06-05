@@ -165,7 +165,7 @@ requests.post("http://127.0.0.1:8000/api/recommend/predict", json={
 
 **你需要做的：**
 
-1. 马力的 `database.py` 已经加了 `engine`、`SessionLocal`、`Base`、`init_db()`
+1. C的 `database.py` 已经加了 `engine`、`SessionLocal`、`Base`、`init_db()`
    - 你的数据库表模型也继承 `from app.database import Base`
    - 你的数据库操作也使用 `from app.database import SessionLocal`
 2. 如果你有自己的表模型，确保放在 `app/models/` 下，并且 `Base.metadata.create_all()` 会自动建表（已在 `main.py` 启动时调用 `init_db()`）
@@ -174,7 +174,7 @@ requests.post("http://127.0.0.1:8000/api/recommend/predict", json={
 
 ### 🟡 前端同学（成员 D，`phase2/charts-ui`）
 
-**你可以使用马力提供的 API 来展示推荐结果：**
+**你可以使用C提供的 API 来展示推荐结果：**
 
 | 需求 | 调哪个接口 |
 | --- | --- |
