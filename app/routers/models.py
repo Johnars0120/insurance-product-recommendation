@@ -24,6 +24,11 @@ def get_model_runs():
     return model_service.list_model_runs()
 
 
+@router.get("/compare")
+def compare_models():
+    return model_service.compare_model_runs()
+
+
 @router.get("/evaluate")
 def evaluate_model():
     latest_run = model_service.get_latest_run()

@@ -1,8 +1,11 @@
+from datetime import datetime, timedelta
+
 import joblib
 import pandas as pd
 import pytest
 
 from app.database import configure_database, create_tables
+from app.services import history_service
 import app.services.model_service as model_service
 
 
@@ -45,16 +48,42 @@ def model_files(tmp_path, monkeypatch):
     }
 
 
-def test_train_baseline_model_returns_metrics_and_model_path(model_files):
-    result = model_service.train_baseline_model(model_name="logistic_regression")
-
-    assert result["model_name"] == "logistic_regression"
-    assert result["train_rows"] == len(model_files["train_data"])
-    assert result["eval_rows"] == len(model_files["eval_data"])
-    assert result["model_path"].endswith("latest_model.joblib")
-    assert result["model_path"].startswith(str(model_files["saved_model_dir"]))
+def _assert_metric_ranges(metrics):
     for metric in ["accuracy", "precision", "recall", "f1", "auc"]:
-        assert 0.0 <= result["metrics"][metric] <= 1.0
+        assert 0.0 <= metrics[metric] <= 1.0
+
+
+def _history_run_summary(run_id, model_name, created_at, auc):
+    return {
+        "run_id": run_id,
+        "model_name": model_name,
+        "train_rows": 6,
+        "eval_rows": 4,
+        "metrics": {
+            "accuracy": auc,
+            "precision": auc,
+            "recall": auc,
+            "f1": auc,
+            "auc": auc,
+        },
+        "model_path": f"/tmp/{run_id}.joblib",
+        "created_at": created_at.isoformat(),
+    }
+
+
+def test_train_baseline_model_returns_metrics_and_model_path_for_supported_models(model_files):
+    supported_models = ["logistic_regression", "decision_tree", "random_forest"]
+
+    for model_name in supported_models:
+        result = model_service.train_baseline_model(model_name=model_name)
+
+        assert result["model_name"] == model_name
+        assert result["run_id"]
+        assert result["train_rows"] == len(model_files["train_data"])
+        assert result["eval_rows"] == len(model_files["eval_data"])
+        assert result["model_path"].endswith("latest_model.joblib")
+        assert result["model_path"].startswith(str(model_files["saved_model_dir"]))
+        _assert_metric_ranges(result["metrics"])
 
 
 def test_train_baseline_model_saves_predictable_joblib_bundle(model_files):
@@ -99,3 +128,41 @@ def test_train_baseline_model_requires_both_eval_target_classes(model_files, mon
 
     with pytest.raises(ValueError, match="both classes"):
         model_service.train_baseline_model(model_name="logistic_regression")
+
+
+def test_history_service_lists_latest_model_run_per_model_without_recent_limit(model_files):
+    base_time = datetime(2026, 1, 1, 12, 0, 0)
+    expected_decision_tree = history_service.save_model_run(
+        _history_run_summary("decision-tree-old", "decision_tree", base_time, 0.51)
+    )
+    expected_random_forest = history_service.save_model_run(
+        _history_run_summary(
+            "random-forest-latest",
+            "random_forest",
+            base_time + timedelta(seconds=30),
+            0.72,
+        )
+    )
+
+    expected_logistic_regression = None
+    for index in range(25):
+        expected_logistic_regression = history_service.save_model_run(
+            _history_run_summary(
+                f"logistic-regression-{index}",
+                "logistic_regression",
+                base_time + timedelta(minutes=index + 1),
+                0.60,
+            )
+        )
+
+    runs = history_service.list_latest_model_runs_by_model(
+        ["logistic_regression", "decision_tree", "random_forest"]
+    )
+    runs_by_model = {run["model_name"]: run for run in runs}
+
+    assert (
+        runs_by_model["logistic_regression"]["run_id"]
+        == expected_logistic_regression["run_id"]
+    )
+    assert runs_by_model["decision_tree"]["run_id"] == expected_decision_tree["run_id"]
+    assert runs_by_model["random_forest"]["run_id"] == expected_random_forest["run_id"]

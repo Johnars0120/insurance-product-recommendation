@@ -72,6 +72,34 @@ def list_model_runs(limit=20):
     ]
 
 
+def list_latest_model_runs_by_model(model_names=None):
+    model_names_filter = None
+    if model_names is not None:
+        model_names_filter = list(model_names)
+        if not model_names_filter:
+            return []
+
+    with get_session() as session:
+        query = (
+            session.query(ModelRunRecord, ModelMetricRecord)
+            .join(ModelMetricRecord, ModelMetricRecord.run_id == ModelRunRecord.run_id)
+            .order_by(ModelRunRecord.created_at.desc(), ModelRunRecord.id.desc())
+        )
+        if model_names_filter is not None:
+            query = query.filter(ModelRunRecord.model_name.in_(model_names_filter))
+        rows = query.all()
+
+    latest_runs_by_model = {}
+    for run_record, metric_record in rows:
+        if run_record.model_name not in latest_runs_by_model:
+            latest_runs_by_model[run_record.model_name] = _serialize_run(
+                run_record,
+                metric_record,
+            )
+
+    return list(latest_runs_by_model.values())
+
+
 def get_latest_model_run():
     runs = list_model_runs(limit=1)
     if not runs:

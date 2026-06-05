@@ -3,7 +3,7 @@ from fastapi.templating import Jinja2Templates
 
 from app.config import BASE_DIR
 from app.services.dataset_service import build_dataset_profile
-from app.services.model_service import get_latest_run
+from app.services.model_service import SUPPORTED_MODELS, get_latest_run
 
 
 router = APIRouter(tags=["pages"])
@@ -43,7 +43,7 @@ def train_page(request: Request):
         "train.html",
         {
             "active_page": "train",
-            "available_models": ["logistic_regression"],
+            "available_models": list(SUPPORTED_MODELS),
             "latest_run": get_latest_run(),
         },
     )

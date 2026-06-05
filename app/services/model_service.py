@@ -3,17 +3,19 @@ from uuid import uuid4
 
 import joblib
 import pandas as pd
+from sklearn.ensemble import RandomForestClassifier
 from sklearn.linear_model import LogisticRegression
 from sklearn.metrics import accuracy_score, f1_score, precision_score, recall_score, roc_auc_score
 from sklearn.pipeline import Pipeline
 from sklearn.preprocessing import StandardScaler
+from sklearn.tree import DecisionTreeClassifier
 
 from app.config import EVAL_DATA_FILE, SAVED_MODEL_DIR, TARGET_COLUMN, TRAIN_DATA_FILE
 from app.services import history_service
 
 
 LATEST_RUN = None
-SUPPORTED_MODELS = {"logistic_regression"}
+SUPPORTED_MODELS = ("logistic_regression", "decision_tree", "random_forest")
 RECOMMENDATION_REASONS = {
     "high": "模型预测购买概率较高",
     "medium": "模型预测购买概率中等",
@@ -38,18 +40,33 @@ def _build_model(model_name):
     if model_name not in SUPPORTED_MODELS:
         raise ValueError(f"Unsupported model_name: {model_name}")
 
-    return Pipeline(
-        steps=[
-            ("scaler", StandardScaler()),
-            (
-                "classifier",
-                LogisticRegression(
-                    class_weight="balanced",
-                    max_iter=1000,
-                    random_state=42,
+    if model_name == "logistic_regression":
+        return Pipeline(
+            steps=[
+                ("scaler", StandardScaler()),
+                (
+                    "classifier",
+                    LogisticRegression(
+                        class_weight="balanced",
+                        max_iter=1000,
+                        random_state=42,
+                    ),
                 ),
-            ),
-        ]
+            ]
+        )
+
+    if model_name == "decision_tree":
+        return DecisionTreeClassifier(
+            class_weight="balanced",
+            max_depth=5,
+            random_state=42,
+        )
+
+    return RandomForestClassifier(
+        class_weight="balanced",
+        n_estimators=100,
+        max_depth=8,
+        random_state=42,
     )
 
 
@@ -195,6 +212,18 @@ def get_latest_run():
 
 def list_model_runs():
     return history_service.list_model_runs()
+
+
+def compare_model_runs():
+    latest_runs = history_service.list_latest_model_runs_by_model(SUPPORTED_MODELS)
+    runs_by_model = {run["model_name"]: run for run in latest_runs}
+    return {
+        "items": [
+            runs_by_model[model_name]
+            for model_name in SUPPORTED_MODELS
+            if model_name in runs_by_model
+        ]
+    }
 
 
 def predict_recommendations(limit=20):

@@ -79,6 +79,27 @@ def test_runs_api_returns_latest_run_list(client_with_model_files):
     assert response.json()[0]["metrics"] == train_response.json()["metrics"]
 
 
+def test_compare_api_returns_latest_metrics_for_supported_models(client_with_model_files):
+    for model_name in ["logistic_regression", "decision_tree", "random_forest"]:
+        train_response = client_with_model_files.post(
+            "/api/models/train", json={"model_name": model_name}
+        )
+        assert train_response.status_code == 200
+
+    response = client_with_model_files.get("/api/models/compare")
+
+    assert response.status_code == 200
+    items = response.json()["items"]
+    assert [item["model_name"] for item in items] == [
+        "logistic_regression",
+        "decision_tree",
+        "random_forest",
+    ]
+    for item in items:
+        assert item["run_id"]
+        assert 0.0 <= item["metrics"]["auc"] <= 1.0
+
+
 def test_evaluate_api_returns_404_before_training(client_with_model_files):
     response = client_with_model_files.get("/api/models/evaluate")
 
@@ -88,7 +109,7 @@ def test_evaluate_api_returns_404_before_training(client_with_model_files):
 
 def test_train_api_rejects_unsupported_model_name(client_with_model_files):
     response = client_with_model_files.post(
-        "/api/models/train", json={"model_name": "random_forest"}
+        "/api/models/train", json={"model_name": "xgboost"}
     )
 
     assert response.status_code == 400
