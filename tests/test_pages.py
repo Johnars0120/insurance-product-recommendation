@@ -37,6 +37,22 @@ def test_page_nav_links_are_present():
         assert f'href="{href}"' in response.text
 
 
+def test_second_stage_pages_include_chart_containers():
+    client = TestClient(app)
+
+    expected_containers = {
+        "/data": 'id="dataset-chart"',
+        "/evaluate": 'id="metrics-chart"',
+        "/recommend": 'id="recommend-level-chart"',
+    }
+
+    for path, container in expected_containers.items():
+        response = client.get(path)
+
+        assert response.status_code == 200
+        assert container in response.text
+
+
 def test_static_css_route_returns_stylesheet():
     client = TestClient(app)
 

@@ -5,7 +5,7 @@ from fastapi.staticfiles import StaticFiles
 
 from app.config import BASE_DIR
 from app.database import configure_database, create_tables
-from app.routers import datasets, models, pages, recommendations
+from app.routers import charts, datasets, models, pages, recommendations
 
 
 app = FastAPI(
@@ -21,6 +21,7 @@ create_tables()
 
 app.mount("/static", StaticFiles(directory=BASE_DIR / "app" / "static"), name="static")
 
+app.include_router(charts.router)
 app.include_router(datasets.router)
 app.include_router(models.router)
 app.include_router(recommendations.router)
