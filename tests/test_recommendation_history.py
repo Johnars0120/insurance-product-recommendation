@@ -41,6 +41,18 @@ def _configure_temp_environment(tmp_path, monkeypatch):
     model_service.reset_latest_run()
 
 
+def _recommendation_items(count):
+    return [
+        {
+            "customer_id": str(index),
+            "probability": index / (count + 1),
+            "recommend_level": "medium",
+            "reason": "manual test recommendation",
+        }
+        for index in range(1, count + 1)
+    ]
+
+
 def test_predict_persists_recommendation_results(tmp_path, monkeypatch):
     _configure_temp_environment(tmp_path, monkeypatch)
     client = TestClient(app)
@@ -54,6 +66,23 @@ def test_predict_persists_recommendation_results(tmp_path, monkeypatch):
     assert len(stored) == 3
     assert stored[0]["customer_id"] == "1"
     assert stored == body["items"]
+
+
+def test_predict_replaces_recommendation_results_for_same_run(
+    tmp_path, monkeypatch
+):
+    _configure_temp_environment(tmp_path, monkeypatch)
+    client = TestClient(app)
+    first_response = client.post("/api/recommend/predict", json={"limit": 2})
+    second_response = client.post("/api/recommend/predict", json={"limit": 3})
+
+    assert first_response.status_code == 200
+    assert second_response.status_code == 200
+    run_id = first_response.json()["run_id"]
+    assert second_response.json()["run_id"] == run_id
+    stored = history_service.list_recommendation_results(run_id=run_id)
+    assert len(stored) == 3
+    assert [item["customer_id"] for item in stored] == ["1", "2", "3"]
 
 
 def test_recommendation_history_api_returns_latest_results(tmp_path, monkeypatch):
@@ -87,6 +116,45 @@ def test_recommendation_export_returns_csv(tmp_path, monkeypatch):
     assert response.text.splitlines()[0] == (
         "customer_id,probability,recommend_level,reason"
     )
+
+
+def test_recommendation_export_returns_all_rows_for_run_id(
+    tmp_path, monkeypatch
+):
+    _configure_temp_environment(tmp_path, monkeypatch)
+    run = model_service.train_baseline_model()
+    history_service.save_recommendation_results(
+        run["run_id"],
+        _recommendation_items(105),
+    )
+    client = TestClient(app)
+
+    response = client.get(f"/api/recommend/export?run_id={run['run_id']}")
+
+    assert response.status_code == 200
+    csv_lines = response.text.splitlines()
+    assert len(csv_lines) == 106
+    assert csv_lines[0] == "customer_id,probability,recommend_level,reason"
+    assert csv_lines[-1].startswith("105,")
+
+
+def test_recommendation_history_service_limit_none_returns_all_rows(
+    tmp_path, monkeypatch
+):
+    _configure_temp_environment(tmp_path, monkeypatch)
+    run = model_service.train_baseline_model()
+    history_service.save_recommendation_results(
+        run["run_id"],
+        _recommendation_items(105),
+    )
+
+    results = model_service.list_recommendation_history(
+        run_id=run["run_id"],
+        limit=None,
+    )
+
+    assert len(results) == 105
+    assert results[-1]["customer_id"] == "105"
 
 
 def test_recommendation_history_api_returns_empty_without_history(

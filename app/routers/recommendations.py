@@ -59,7 +59,7 @@ def get_recommendation_history(
 @router.get("/export")
 def export_recommendations(run_id: Optional[str] = None):
     try:
-        items = model_service.list_recommendation_history(run_id=run_id)
+        items = model_service.list_recommendation_history(run_id=run_id, limit=None)
     except ValueError as exc:
         raise HTTPException(status_code=400, detail=str(exc)) from exc
 

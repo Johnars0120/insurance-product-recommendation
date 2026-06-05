@@ -143,6 +143,9 @@ def save_recommendation_results(run_id, items):
     ]
 
     with get_session() as session:
+        session.query(RecommendationResultRecord).filter(
+            RecommendationResultRecord.run_id == run_id
+        ).delete(synchronize_session=False)
         session.add_all(records)
 
     return [_serialize_recommendation_result(record) for record in records]
@@ -165,7 +168,7 @@ def get_latest_recommendation_run_id():
 
 
 def list_recommendation_results(run_id=None, limit=100):
-    if limit <= 0:
+    if limit is not None and limit <= 0:
         raise ValueError("limit must be positive")
 
     effective_run_id = run_id
@@ -175,13 +178,14 @@ def list_recommendation_results(run_id=None, limit=100):
         return []
 
     with get_session() as session:
-        result_records = (
+        query = (
             session.query(RecommendationResultRecord)
             .filter(RecommendationResultRecord.run_id == effective_run_id)
             .order_by(RecommendationResultRecord.id.asc())
-            .limit(limit)
-            .all()
         )
+        if limit is not None:
+            query = query.limit(limit)
+        result_records = query.all()
 
     return [
         _serialize_recommendation_result(result_record)
