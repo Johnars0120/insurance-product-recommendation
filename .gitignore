@@ -12,6 +12,7 @@ env/
 # IDE settings
 .vscode/
 .idea/
+.worktrees/
 
 # System files
 .DS_Store
