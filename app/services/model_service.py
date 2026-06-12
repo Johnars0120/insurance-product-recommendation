@@ -120,6 +120,32 @@ def _load_latest_model_bundle():
     return bundle
 
 
+def _load_prediction_bundle_and_run_id():
+    bundle = _load_latest_model_bundle()
+    run_id = bundle.get("run_id")
+    if run_id:
+        if history_service.model_run_exists(run_id):
+            return bundle, run_id
+        return _train_and_load_prediction_bundle()
+
+    latest_run = history_service.get_latest_model_run()
+    if latest_run is not None:
+        # Legacy bundles may not carry run_id metadata; use the latest persisted
+        # model run so recommendation rows still satisfy the foreign key.
+        return bundle, latest_run["run_id"]
+
+    return _train_and_load_prediction_bundle()
+
+
+def _train_and_load_prediction_bundle():
+    train_baseline_model()
+    bundle = _load_latest_model_bundle()
+    run_id = bundle.get("run_id")
+    if not run_id:
+        raise ValueError("Saved model bundle is missing run_id after retraining")
+    return bundle, run_id
+
+
 def _validate_model_bundle(bundle):
     if not isinstance(bundle, dict):
         raise ValueError("Saved model bundle must be a dict")
@@ -230,7 +256,7 @@ def predict_recommendations(limit=20):
     if limit <= 0:
         raise ValueError("limit must be positive")
 
-    bundle = _load_latest_model_bundle()
+    bundle, run_id = _load_prediction_bundle_and_run_id()
     eval_data = pd.read_excel(EVAL_DATA_FILE)
     feature_columns = bundle["feature_columns"]
     _validate_eval_features(eval_data, feature_columns)
@@ -252,10 +278,20 @@ def predict_recommendations(limit=20):
             }
         )
 
+    history_service.save_recommendation_results(run_id, items)
     return {
+        "run_id": run_id,
         "count": len(items),
         "items": items,
     }
+
+
+def list_recommendation_history(run_id=None, limit=100):
+    return history_service.list_recommendation_results(run_id=run_id, limit=limit)
+
+
+def get_latest_recommendation_run_id():
+    return history_service.get_latest_recommendation_run_id()
 
 
 def reset_latest_run():

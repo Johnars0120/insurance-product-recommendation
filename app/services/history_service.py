@@ -1,7 +1,11 @@
 from datetime import datetime
 
 from app.database import get_session
-from app.models.database_models import ModelMetricRecord, ModelRunRecord
+from app.models.database_models import (
+    ModelMetricRecord,
+    ModelRunRecord,
+    RecommendationResultRecord,
+)
 
 
 METRIC_FIELDS = ("accuracy", "precision", "recall", "f1", "auc")
@@ -24,6 +28,15 @@ def _serialize_run(run_record, metric_record):
         },
         "model_path": run_record.model_path,
         "created_at": run_record.created_at.isoformat(),
+    }
+
+
+def _serialize_recommendation_result(result_record):
+    return {
+        "customer_id": result_record.customer_id,
+        "probability": float(result_record.probability),
+        "recommend_level": result_record.recommend_level,
+        "reason": result_record.reason,
     }
 
 
@@ -105,3 +118,76 @@ def get_latest_model_run():
     if not runs:
         return None
     return runs[0]
+
+
+def model_run_exists(run_id):
+    with get_session() as session:
+        return (
+            session.query(ModelRunRecord.id)
+            .filter(ModelRunRecord.run_id == run_id)
+            .first()
+            is not None
+        )
+
+
+def save_recommendation_results(run_id, items):
+    records = [
+        RecommendationResultRecord(
+            run_id=run_id,
+            customer_id=item["customer_id"],
+            probability=float(item["probability"]),
+            recommend_level=item["recommend_level"],
+            reason=item["reason"],
+        )
+        for item in items
+    ]
+
+    with get_session() as session:
+        session.query(RecommendationResultRecord).filter(
+            RecommendationResultRecord.run_id == run_id
+        ).delete(synchronize_session=False)
+        session.add_all(records)
+
+    return [_serialize_recommendation_result(record) for record in records]
+
+
+def get_latest_recommendation_run_id():
+    with get_session() as session:
+        result_record = (
+            session.query(RecommendationResultRecord)
+            .order_by(
+                RecommendationResultRecord.created_at.desc(),
+                RecommendationResultRecord.id.desc(),
+            )
+            .first()
+        )
+
+    if result_record is None:
+        return None
+    return result_record.run_id
+
+
+def list_recommendation_results(run_id=None, limit=100):
+    if limit is not None and limit <= 0:
+        raise ValueError("limit must be positive")
+
+    effective_run_id = run_id
+    if effective_run_id is None:
+        effective_run_id = get_latest_recommendation_run_id()
+    if effective_run_id is None:
+        return []
+
+    with get_session() as session:
+        query = (
+            session.query(RecommendationResultRecord)
+            .filter(RecommendationResultRecord.run_id == effective_run_id)
+            .order_by(RecommendationResultRecord.id.asc())
+        )
+        if limit is not None:
+            query = query.limit(limit)
+        result_records = query.all()
+
+    return [
+        _serialize_recommendation_result(result_record)
+        for result_record in result_records
+    ]
