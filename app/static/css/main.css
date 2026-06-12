@@ -138,6 +138,10 @@ p {
     overflow-wrap: anywhere;
 }
 
+.panel + .panel {
+    margin-top: 16px;
+}
+
 .link-card {
     min-height: 160px;
     display: flex;
@@ -213,6 +217,12 @@ dd {
 .empty {
     margin-bottom: 0;
     color: var(--warning);
+}
+
+.chart-container {
+    width: 100%;
+    height: 320px;
+    min-height: 320px;
 }
 
 .plain-list {

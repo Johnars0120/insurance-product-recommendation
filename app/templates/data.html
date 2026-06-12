@@ -38,9 +38,61 @@
 
 <section class="panel">
     <div class="section-title">
+        <h2>训练集样本比例</h2>
+        <code>GET /api/charts/dataset</code>
+    </div>
+    <div id="dataset-chart" class="chart-container" role="img" aria-label="训练集正负样本比例"></div>
+</section>
+
+<section class="panel">
+    <div class="section-title">
         <h2>接口</h2>
         <code>GET /api/datasets/profile</code>
     </div>
     <p>该接口返回本页使用的基础统计信息，供前端展示和报告截图使用。</p>
 </section>
+{% endblock %}
+
+{% block scripts %}
+<script>
+(function () {
+    var container = document.getElementById("dataset-chart");
+    if (!container || !window.echarts) {
+        return;
+    }
+
+    fetch("/api/charts/dataset")
+        .then(function (response) {
+            return response.json();
+        })
+        .then(function (data) {
+            var series = Array.isArray(data.series) ? data.series : [];
+            var chart = echarts.init(container);
+            chart.setOption({
+                color: ["#176b56", "#8a5a13"],
+                tooltip: {
+                    trigger: "item"
+                },
+                legend: {
+                    bottom: 0
+                },
+                series: [
+                    {
+                        name: "训练集",
+                        type: "pie",
+                        radius: ["42%", "68%"],
+                        center: ["50%", "45%"],
+                        data: series
+                    }
+                ]
+            });
+            window.addEventListener("resize", function () {
+                chart.resize();
+            });
+        })
+        .catch(function (error) {
+            console.warn("Dataset chart failed to render", error);
+        });
+}());
+</script>
 {% endblock %}

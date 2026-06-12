@@ -24,4 +24,71 @@
     <p class="empty">暂无评估结果。请先通过 <code>POST /api/models/train</code> 完成一次模型训练。</p>
     {% endif %}
 </section>
+
+<section class="panel">
+    <div class="section-title">
+        <h2>模型指标对比</h2>
+        <a class="text-link" href="/api/models/compare">对比 API</a>
+    </div>
+    <div id="metrics-chart" class="chart-container" role="img" aria-label="模型指标对比"></div>
+</section>
+{% endblock %}
+
+{% block scripts %}
+<script>
+(function () {
+    var container = document.getElementById("metrics-chart");
+    if (!container || !window.echarts) {
+        return;
+    }
+
+    fetch("/api/charts/model-metrics")
+        .then(function (response) {
+            return response.json();
+        })
+        .then(function (data) {
+            var models = Array.isArray(data.models) ? data.models : [];
+            var metrics = data.metrics || {};
+            var metricNames = ["accuracy", "precision", "recall", "f1", "auc"];
+            var chart = echarts.init(container);
+            chart.setOption({
+                color: ["#176b56", "#476b91", "#8a5a13", "#6d5b8d", "#c05a28"],
+                tooltip: {
+                    trigger: "axis"
+                },
+                legend: {
+                    top: 0
+                },
+                grid: {
+                    left: 40,
+                    right: 18,
+                    top: 54,
+                    bottom: 42
+                },
+                xAxis: {
+                    type: "category",
+                    data: models
+                },
+                yAxis: {
+                    type: "value",
+                    min: 0,
+                    max: 1
+                },
+                series: metricNames.map(function (metricName) {
+                    return {
+                        name: metricName,
+                        type: "bar",
+                        data: Array.isArray(metrics[metricName]) ? metrics[metricName] : []
+                    };
+                })
+            });
+            window.addEventListener("resize", function () {
+                chart.resize();
+            });
+        })
+        .catch(function (error) {
+            console.warn("Metrics chart failed to render", error);
+        });
+}());
+</script>
 {% endblock %}
