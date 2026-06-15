@@ -1,6 +1,6 @@
 # 保险产品智能推荐系统
 
-本仓库用于团队协作开发“保险产品智能推荐系统”。项目第一版采用轻量 Web 系统方案，重点跑通数据读取、模型训练、模型评估、保险推荐、页面展示和结果导出流程。
+本仓库用于团队协作开发“保险产品智能推荐系统”。项目第一版采用轻量 Web 系统方案，重点跑通数据读取、模型训练、模型评估、保险推荐、页面展示和结果导出流程。第二阶段在此基础上补充持久化、多模型对比、图表展示和答辩 QA 材料。
 
 ## 技术路线
 
@@ -10,6 +10,14 @@
 - Pandas / openpyxl：Excel 数据读取与处理
 - scikit-learn：模型训练与评估
 - ECharts：前端图表展示
+
+## 第二阶段新增能力
+
+- SQLite 持久化训练记录、指标记录和推荐结果，系统重启后仍可查询最近训练和推荐历史。
+- 支持 `logistic_regression`、`decision_tree`、`random_forest` 三类模型训练，并通过 `/api/models/compare` 对比 Accuracy、Precision、Recall、F1、AUC。
+- `/data`、`/evaluate`、`/recommend` 页面接入 ECharts，分别展示正负样本比例、模型指标对比和推荐等级分布。
+- 推荐结果支持历史查询和 `/api/recommend/export` CSV 导出。
+- 第二阶段测试记录见 [docs/第二阶段测试记录.md](docs/第二阶段测试记录.md)，答辩演示流程见 [docs/答辩演示流程.md](docs/答辩演示流程.md)。
 
 ## 快速运行
 
