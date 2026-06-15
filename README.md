@@ -48,7 +48,35 @@ git --version
 
 ## 快速启动
 
-### 1. 获取项目代码
+### 方式一：一键启动
+
+Windows 用户可以直接双击项目根目录下的：
+
+```text
+run_app.bat
+```
+
+脚本会自动进入项目目录、创建 `.venv` 虚拟环境、安装依赖、打开浏览器并启动服务。
+
+启动成功后访问：
+
+```text
+http://127.0.0.1:8000
+```
+
+停止服务时，在脚本窗口按 `Ctrl+C`，然后按提示退出即可。
+
+如果想指定端口或跳过依赖安装，可以使用 PowerShell：
+
+```powershell
+powershell -ExecutionPolicy Bypass -File scripts\run_app.ps1 -Port 8001
+powershell -ExecutionPolicy Bypass -File scripts\run_app.ps1 -SkipInstall -NoBrowser
+powershell -ExecutionPolicy Bypass -File scripts\run_app.ps1 -Reload
+```
+
+### 方式二：手动启动
+
+#### 1. 获取项目代码
 
 ```powershell
 git clone https://github.com/Johnars0120/insurance-product-recommendation.git
@@ -63,7 +91,7 @@ git switch main
 git pull origin main
 ```
 
-### 2. 创建并激活虚拟环境
+#### 2. 创建并激活虚拟环境
 
 ```powershell
 python -m venv .venv
@@ -72,7 +100,7 @@ python -m venv .venv
 
 激活成功后，命令行前面通常会出现 `(.venv)`。
 
-### 3. 安装依赖
+#### 3. 安装依赖
 
 ```powershell
 pip install -r requirements.txt
@@ -84,7 +112,7 @@ pip install -r requirements.txt
 pip install -r requirements.txt -i https://pypi.tuna.tsinghua.edu.cn/simple
 ```
 
-### 4. 启动系统
+#### 4. 启动系统
 
 ```powershell
 uvicorn app.main:app --reload --host 127.0.0.1 --port 8000
