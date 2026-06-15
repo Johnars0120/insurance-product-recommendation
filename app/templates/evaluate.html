@@ -27,6 +27,39 @@
 
 <section class="panel">
     <div class="section-title">
+        <h2>最近训练运行</h2>
+        <a class="text-link" href="/api/models/runs">运行记录 API</a>
+    </div>
+    <table id="recent-runs-table" class="data-table">
+        <thead>
+            <tr>
+                <th>模型</th>
+                <th>运行编号</th>
+                <th>训练行数</th>
+                <th>评估行数</th>
+                <th>创建时间</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% if latest_run %}
+            <tr>
+                <td>{{ latest_run.model_name }}</td>
+                <td>{{ latest_run.run_id }}</td>
+                <td>{{ latest_run.train_rows }}</td>
+                <td>{{ latest_run.eval_rows }}</td>
+                <td>{{ latest_run.created_at }}</td>
+            </tr>
+            {% else %}
+            <tr>
+                <td class="empty" colspan="5">暂无训练记录。</td>
+            </tr>
+            {% endif %}
+        </tbody>
+    </table>
+</section>
+
+<section class="panel">
+    <div class="section-title">
         <h2>模型指标对比</h2>
         <a class="text-link" href="/api/models/compare">对比 API</a>
     </div>
@@ -36,6 +69,58 @@
 
 {% block scripts %}
 <script>
+(function () {
+    var table = document.getElementById("recent-runs-table");
+    if (!table) {
+        return;
+    }
+
+    var tbody = table.querySelector("tbody");
+    function appendCell(row, value) {
+        var cell = document.createElement("td");
+        cell.textContent = value === null || value === undefined ? "" : String(value);
+        row.appendChild(cell);
+    }
+
+    function appendEmpty(message) {
+        var row = document.createElement("tr");
+        var cell = document.createElement("td");
+        cell.className = "empty";
+        cell.colSpan = 5;
+        cell.textContent = message;
+        row.appendChild(cell);
+        tbody.appendChild(row);
+    }
+
+    function renderRuns(runs) {
+        tbody.textContent = "";
+        if (!Array.isArray(runs) || runs.length === 0) {
+            appendEmpty("暂无训练记录。");
+            return;
+        }
+
+        runs.forEach(function (run) {
+            var row = document.createElement("tr");
+            appendCell(row, run.model_name);
+            appendCell(row, run.run_id);
+            appendCell(row, run.train_rows);
+            appendCell(row, run.eval_rows);
+            appendCell(row, run.created_at);
+            tbody.appendChild(row);
+        });
+    }
+
+    fetch("/api/models/runs")
+        .then(function (response) {
+            return response.json();
+        })
+        .then(renderRuns)
+        .catch(function () {
+            tbody.textContent = "";
+            appendEmpty("运行记录加载失败。");
+        });
+}());
+
 (function () {
     var container = document.getElementById("metrics-chart");
     if (!container || !window.echarts) {

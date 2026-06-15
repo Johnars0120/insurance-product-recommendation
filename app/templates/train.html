@@ -30,8 +30,27 @@
 
 <section class="panel">
     <div class="section-title">
-        <h2>最近一次训练</h2>
+        <h2>启动训练</h2>
         <a class="text-link" href="/api/models/runs">运行记录 API</a>
+    </div>
+    <div class="form-row">
+        <label for="model-name">
+            模型
+            <select id="model-name" name="model_name">
+                <option value="logistic_regression">逻辑回归</option>
+                <option value="decision_tree">决策树</option>
+                <option value="random_forest">随机森林</option>
+            </select>
+        </label>
+        <button id="train-model-button" class="button" type="button">训练模型</button>
+    </div>
+    <div id="train-result" class="status-box" aria-live="polite"></div>
+</section>
+
+<section class="panel">
+    <div class="section-title">
+        <h2>最近一次训练</h2>
+        <a class="text-link" href="/api/models/evaluate">评估 API</a>
     </div>
     {% if latest_run %}
     <dl class="details">
@@ -43,4 +62,90 @@
     <p class="empty">暂无训练记录。调用训练 API 后，本页会展示当前进程中的最近一次运行。</p>
     {% endif %}
 </section>
+{% endblock %}
+
+{% block scripts %}
+<script>
+(function () {
+    var select = document.getElementById("model-name");
+    var button = document.getElementById("train-model-button");
+    var result = document.getElementById("train-result");
+    if (!select || !button || !result) {
+        return;
+    }
+
+    function formatValue(value) {
+        if (value === null || value === undefined) {
+            return "";
+        }
+        if (typeof value === "number") {
+            return value.toFixed(4);
+        }
+        return String(value);
+    }
+
+    function addDetail(container, label, value) {
+        var item = document.createElement("div");
+        var term = document.createElement("dt");
+        var detail = document.createElement("dd");
+        term.textContent = label;
+        detail.textContent = formatValue(value);
+        item.appendChild(term);
+        item.appendChild(detail);
+        container.appendChild(item);
+    }
+
+    function renderRun(data) {
+        var metrics = data.metrics || {};
+        var metricNames = Object.keys(metrics);
+        var summary = document.createElement("dl");
+        summary.className = "details";
+        addDetail(summary, "运行编号", data.run_id);
+        addDetail(summary, "模型", data.model_name);
+        addDetail(summary, "训练行数", data.train_rows);
+        addDetail(summary, "评估行数", data.eval_rows);
+
+        result.textContent = "";
+        result.appendChild(summary);
+
+        if (metricNames.length > 0) {
+            var metricList = document.createElement("dl");
+            metricList.className = "metrics metrics-wide";
+            metricNames.forEach(function (metricName) {
+                addDetail(metricList, metricName, metrics[metricName]);
+            });
+            result.appendChild(metricList);
+        }
+    }
+
+    function parseJsonResponse(response) {
+        return response.json().then(function (data) {
+            if (!response.ok) {
+                throw data;
+            }
+            return data;
+        });
+    }
+
+    button.addEventListener("click", function () {
+        var modelName = select.value;
+        button.disabled = true;
+        result.textContent = "训练中，请稍候...";
+
+        fetch("/api/models/train", {
+            method: "POST",
+            headers: {"Content-Type": "application/json"},
+            body: JSON.stringify({model_name: modelName})
+        })
+            .then(parseJsonResponse)
+            .then(renderRun)
+            .catch(function (error) {
+                result.textContent = error.detail || "训练失败，请稍后重试。";
+            })
+            .then(function () {
+                button.disabled = false;
+            });
+    });
+}());
+</script>
 {% endblock %}
