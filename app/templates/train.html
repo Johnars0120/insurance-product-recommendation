@@ -6,7 +6,7 @@
 <section class="page-heading">
     <p class="eyebrow">Training</p>
     <h1>模型训练</h1>
-    <p>页面不会在 GET 请求中启动训练；训练动作通过 API 明确触发，避免刷新页面产生重复模型运行。</p>
+    <p>选择模型后手动启动训练，系统会保存训练记录和最新模型文件，便于后续评估与推荐使用。</p>
 </section>
 
 <section class="grid cols-2">
@@ -22,6 +22,7 @@
     <article class="card">
         <span class="card-label">训练接口</span>
         <h2>POST /api/models/train</h2>
+        <p>页面按钮会调用该接口；保留接口示例便于调试和答辩演示。</p>
         <pre><code>{
   "model_name": "logistic_regression"
 }</code></pre>

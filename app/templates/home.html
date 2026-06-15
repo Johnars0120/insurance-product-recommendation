@@ -4,9 +4,9 @@
 
 {% block content %}
 <section class="page-heading">
-    <p class="eyebrow">Phase 1 MVP</p>
+    <p class="eyebrow">Insurance Recommendation</p>
     <h1>保险产品智能推荐系统</h1>
-    <p>面向课程实践的轻量级运营控制台，当前支持数据概览、逻辑回归训练、模型评估和推荐预测 API。</p>
+    <p>面向保险客户运营场景的轻量级推荐控制台，支持数据概览、多模型训练、指标评估、客户推荐、历史查询和结果导出。</p>
 </section>
 
 <section class="grid cols-4" aria-label="功能入口">
@@ -17,18 +17,18 @@
     </a>
     <a class="card link-card" href="/train">
         <span class="card-label">模型训练</span>
-        <strong>触发逻辑回归训练 API</strong>
-        <span>页面只展示入口，训练由 POST 接口执行。</span>
+        <strong>训练并保存推荐模型</strong>
+        <span>支持逻辑回归、决策树和随机森林。</span>
     </a>
     <a class="card link-card" href="/evaluate">
         <span class="card-label">模型评估</span>
-        <strong>查看最近一次运行指标</strong>
+        <strong>比较最近训练指标</strong>
         <span>Accuracy、Precision、Recall、F1 和 AUC。</span>
     </a>
     <a class="card link-card" href="/recommend">
         <span class="card-label">推荐预测</span>
-        <strong>生成客户推荐等级</strong>
-        <span>通过 API 返回概率、等级和推荐理由。</span>
+        <strong>生成客户跟进名单</strong>
+        <span>输出概率、等级、推荐理由并支持导出。</span>
     </a>
 </section>
 

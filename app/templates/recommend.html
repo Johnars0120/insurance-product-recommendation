@@ -42,21 +42,23 @@
         <button id="predict-recommend-button" class="button" type="button">生成推荐</button>
     </div>
     <div id="recommend-status" class="status-box" aria-live="polite"></div>
-    <table id="recommend-results-table" class="data-table">
-        <thead>
-            <tr>
-                <th>客户编号</th>
-                <th>购买概率</th>
-                <th>推荐等级</th>
-                <th>推荐理由</th>
-            </tr>
-        </thead>
-        <tbody>
-            <tr>
-                <td class="empty" colspan="4">暂无本次推荐结果。</td>
-            </tr>
-        </tbody>
-    </table>
+    <div class="table-wrap">
+        <table id="recommend-results-table" class="data-table">
+            <thead>
+                <tr>
+                    <th>客户编号</th>
+                    <th>购买概率</th>
+                    <th>推荐等级</th>
+                    <th>推荐理由</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td class="empty" colspan="4">暂无本次推荐结果。</td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
 </section>
 
 <section class="panel">
@@ -75,21 +77,23 @@
         <h2>最近推荐历史</h2>
         <a class="text-link" href="/api/recommend/export">导出 CSV</a>
     </div>
-    <table id="recommend-history-table" class="data-table">
-        <thead>
-            <tr>
-                <th>客户编号</th>
-                <th>购买概率</th>
-                <th>推荐等级</th>
-                <th>推荐理由</th>
-            </tr>
-        </thead>
-        <tbody>
-            <tr>
-                <td class="empty" colspan="4">暂无推荐历史。</td>
-            </tr>
-        </tbody>
-    </table>
+    <div class="table-wrap">
+        <table id="recommend-history-table" class="data-table">
+            <thead>
+                <tr>
+                    <th>客户编号</th>
+                    <th>购买概率</th>
+                    <th>推荐等级</th>
+                    <th>推荐理由</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td class="empty" colspan="4">暂无推荐历史。</td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
 </section>
 {% endblock %}
 
@@ -112,11 +116,24 @@
         return value === null || value === undefined ? "" : String(value);
     }
 
-    function appendCell(row, value, formatter) {
+    function appendCell(row, value, formatter, className) {
         var cell = document.createElement("td");
+        if (className) {
+            cell.className = className;
+        }
         cell.textContent = formatter ? formatter(value) : (
             value === null || value === undefined ? "" : String(value)
         );
+        row.appendChild(cell);
+    }
+
+    function appendLevelCell(row, value) {
+        var cell = document.createElement("td");
+        var badge = document.createElement("span");
+        var level = value === null || value === undefined ? "" : String(value);
+        badge.className = "level-badge level-" + level;
+        badge.textContent = level || "unknown";
+        cell.appendChild(badge);
         row.appendChild(cell);
     }
 
@@ -141,8 +158,8 @@
         items.forEach(function (item) {
             var row = document.createElement("tr");
             appendCell(row, item.customer_id);
-            appendCell(row, item.probability, formatProbability);
-            appendCell(row, item.recommend_level);
+            appendCell(row, item.probability, formatProbability, "numeric-cell");
+            appendLevelCell(row, item.recommend_level);
             appendCell(row, item.reason);
             tbody.appendChild(row);
         });
