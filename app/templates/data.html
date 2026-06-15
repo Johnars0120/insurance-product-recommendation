@@ -5,30 +5,35 @@
 {% block content %}
 <section class="page-heading">
     <p class="eyebrow">Dataset</p>
-    <h1>数据概览</h1>
-    <p>上传或查看当前训练集与评估集。目标字段：<strong>{{ profile.target_column }}</strong>；特征字段 {{ profile.feature_columns | length }} 个。</p>
+    <h1>数据集上传</h1>
+    <p>上传训练集与评估集后，系统会校验字段并生成数据分析。目标字段：<strong>{{ profile.target_column }}</strong>。</p>
 </section>
 
-<section class="panel">
+<section class="panel upload-panel">
     <div class="section-title">
         <h2>上传数据集</h2>
         <code>POST /api/datasets/upload</code>
     </div>
     <form id="dataset-upload-form" class="upload-form">
-        <label for="train-file">
-            训练集 Excel
-            <input id="train-file" name="train_file" type="file" accept=".xlsx" required>
+        <label class="upload-dropzone" for="train-file" data-file-input="train-file">
+            <span class="upload-title">训练集文件</span>
+            <span class="upload-copy">点击选择，或拖动文件到这里</span>
+            <span id="train-file-name" class="upload-file-name">支持 .xlsx / .csv</span>
+            <input id="train-file" name="train_file" type="file" accept=".xlsx,.csv" required>
         </label>
-        <label for="eval-file">
-            评估集 Excel
-            <input id="eval-file" name="eval_file" type="file" accept=".xlsx" required>
+        <label class="upload-dropzone" for="eval-file" data-file-input="eval-file">
+            <span class="upload-title">评估集文件</span>
+            <span class="upload-copy">点击选择，或拖动文件到这里</span>
+            <span id="eval-file-name" class="upload-file-name">支持 .xlsx / .csv</span>
+            <input id="eval-file" name="eval_file" type="file" accept=".xlsx,.csv" required>
         </label>
-        <button id="dataset-upload-button" class="button" type="submit">上传并替换数据</button>
+        <button id="dataset-upload-button" class="button upload-button" type="submit">上传并替换数据</button>
     </form>
-    <p class="hint">训练集和评估集需要包含相同的特征字段，并都包含目标字段 <code>{{ profile.target_column }}</code>。上传成功后请重新训练模型。</p>
+    <p class="hint">训练集和评估集需要包含相同的特征字段，并都包含目标字段 <code>{{ profile.target_column }}</code>。上传成功后会显示数据分析，并需要重新训练模型。</p>
     <div id="dataset-upload-status" class="status-box" aria-live="polite"></div>
 </section>
 
+{% if show_analysis %}
 <section class="grid cols-2">
     <article class="card">
         <span class="card-label">训练集</span>
@@ -63,6 +68,13 @@
     </div>
     <div id="dataset-chart" class="chart-container" role="img" aria-label="训练集正负样本比例"></div>
 </section>
+{% else %}
+<section class="panel analysis-placeholder">
+    <span class="card-label">上传后显示数据分析</span>
+    <h2>等待数据集上传</h2>
+    <p>请选择训练集和评估集文件。系统完成校验后，会在这里展示样本数、字段数、正负样本比例、缺失值和训练集样本比例图。</p>
+</section>
+{% endif %}
 
 <section class="panel">
     <div class="section-title">
@@ -82,6 +94,55 @@
     if (!form || !button || !status) {
         return;
     }
+
+    function updateFileName(input) {
+        var target = document.getElementById(input.id + "-name");
+        if (!target) {
+            return;
+        }
+        target.textContent = input.files && input.files.length > 0
+            ? input.files[0].name
+            : "支持 .xlsx / .csv";
+    }
+
+    function bindDropzone(dropzone) {
+        var input = document.getElementById(dropzone.dataset.fileInput);
+        if (!input) {
+            return;
+        }
+
+        input.addEventListener("change", function () {
+            updateFileName(input);
+        });
+
+        ["dragenter", "dragover"].forEach(function (eventName) {
+            dropzone.addEventListener(eventName, function (event) {
+                event.preventDefault();
+                dropzone.classList.add("drag-over");
+            });
+        });
+
+        ["dragleave", "drop"].forEach(function (eventName) {
+            dropzone.addEventListener(eventName, function (event) {
+                event.preventDefault();
+                dropzone.classList.remove("drag-over");
+            });
+        });
+
+        dropzone.addEventListener("drop", function (event) {
+            var files = event.dataTransfer && event.dataTransfer.files;
+            if (!files || files.length === 0) {
+                return;
+            }
+            input.files = files;
+            updateFileName(input);
+        });
+    }
+
+    Array.prototype.forEach.call(
+        document.querySelectorAll(".upload-dropzone"),
+        bindDropzone
+    );
 
     function parseJsonResponse(response) {
         return response.json().then(function (data) {
@@ -110,7 +171,7 @@
                     + data.profile.eval.rows
                     + " 行。页面即将刷新，请重新训练模型。";
                 window.setTimeout(function () {
-                    window.location.reload();
+                    window.location.href = "/data?uploaded=1";
                 }, 800);
             })
             .catch(function (error) {

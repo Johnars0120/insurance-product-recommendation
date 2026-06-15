@@ -47,7 +47,7 @@ def test_second_stage_pages_include_chart_containers():
     client = TestClient(app)
 
     expected_containers = {
-        "/data": 'id="dataset-chart"',
+        "/data?uploaded=1": 'id="dataset-chart"',
         "/evaluate": 'id="metrics-chart"',
         "/recommend": 'id="recommend-level-chart"',
     }
@@ -65,14 +65,34 @@ def test_data_page_contains_dataset_upload_controls(client):
     assert response.status_code == 200
     expected_fragments = [
         'id="dataset-upload-form"',
+        'class="upload-dropzone"',
+        'data-file-input="train-file"',
+        'data-file-input="eval-file"',
         'id="train-file"',
         'id="eval-file"',
-        'accept=".xlsx"',
+        'accept=".xlsx,.csv"',
         'fetch("/api/datasets/upload"',
         "FormData(form)",
     ]
     for fragment in expected_fragments:
         assert fragment in response.text
+
+
+def test_data_page_hides_dataset_analysis_before_upload(client):
+    response = client.get("/data")
+
+    assert response.status_code == 200
+    assert "上传后显示数据分析" in response.text
+    assert 'id="dataset-chart"' not in response.text
+    assert "<dt>样本数</dt>" not in response.text
+
+
+def test_data_page_shows_dataset_analysis_after_upload_flag(client):
+    response = client.get("/data?uploaded=1")
+
+    assert response.status_code == 200
+    assert 'id="dataset-chart"' in response.text
+    assert "<dt>样本数</dt>" in response.text
 
 
 def test_frontend_pages_do_not_use_delivery_only_wording(client):

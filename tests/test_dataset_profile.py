@@ -163,3 +163,40 @@ def test_dataset_upload_rejects_missing_target_column(tmp_path, monkeypatch):
     assert TARGET_COLUMN in response.json()["detail"]
     assert train_file.read_text(encoding="utf-8") == "original train"
     assert eval_file.read_text(encoding="utf-8") == "original eval"
+
+
+def test_dataset_upload_accepts_csv_files(tmp_path, monkeypatch):
+    train_file = tmp_path / "data.xlsx"
+    eval_file = tmp_path / "eval.xlsx"
+    train_data = pd.DataFrame(
+        {
+            "age": [31, 42, 53],
+            "income": [5000, 7000, 9000],
+            TARGET_COLUMN: [0, 1, 1],
+        }
+    )
+    eval_data = pd.DataFrame(
+        {
+            "age": [28, 49],
+            "income": [4800, 7600],
+            TARGET_COLUMN: [0, 1],
+        }
+    )
+    monkeypatch.setattr(dataset_service, "TRAIN_DATA_FILE", train_file)
+    monkeypatch.setattr(dataset_service, "EVAL_DATA_FILE", eval_file)
+
+    client = TestClient(app)
+    response = client.post(
+        "/api/datasets/upload",
+        files={
+            "train_file": ("train.csv", train_data.to_csv(index=False).encode("utf-8"), "text/csv"),
+            "eval_file": ("eval.csv", eval_data.to_csv(index=False).encode("utf-8"), "text/csv"),
+        },
+    )
+
+    assert response.status_code == 200
+    body = response.json()
+    assert body["profile"]["train"]["rows"] == 3
+    assert body["profile"]["eval"]["rows"] == 2
+    assert pd.read_excel(train_file)["age"].tolist() == [31, 42, 53]
+    assert pd.read_excel(eval_file)["income"].tolist() == [4800, 7600]

@@ -7,16 +7,19 @@ from app.config import EVAL_DATA_FILE, TARGET_COLUMN, TRAIN_DATA_FILE
 from app.services import model_service
 
 
-def _read_uploaded_excel(file_bytes, filename):
-    if not filename.lower().endswith(".xlsx"):
-        raise ValueError("Only .xlsx dataset files are supported")
+def _read_uploaded_dataset(file_bytes, filename):
+    normalized_filename = filename.lower()
+    if not normalized_filename.endswith((".xlsx", ".csv")):
+        raise ValueError("Only .xlsx and .csv dataset files are supported")
 
     try:
         from io import BytesIO
 
+        if normalized_filename.endswith(".csv"):
+            return pd.read_csv(BytesIO(file_bytes))
         return pd.read_excel(BytesIO(file_bytes))
     except Exception as exc:
-        raise ValueError(f"Could not read Excel file '{filename}': {exc}") from exc
+        raise ValueError(f"Could not read dataset file '{filename}': {exc}") from exc
 
 
 def _validate_uploaded_dataset(data, label):
@@ -39,24 +42,24 @@ def _validate_feature_schema(train_data, eval_data):
         raise ValueError("Train and eval feature columns must match; " + "; ".join(details))
 
 
-def _replace_file(file_path, file_bytes):
+def _replace_dataset_file(file_path, data):
     file_path = Path(file_path)
     file_path.parent.mkdir(parents=True, exist_ok=True)
     with tempfile.NamedTemporaryFile(delete=False, dir=file_path.parent, suffix=file_path.suffix) as temp_file:
-        temp_file.write(file_bytes)
         temp_path = Path(temp_file.name)
+    data.to_excel(temp_path, index=False)
     temp_path.replace(file_path)
 
 
 def save_uploaded_datasets(train_bytes, train_filename, eval_bytes, eval_filename):
-    train_data = _read_uploaded_excel(train_bytes, train_filename)
-    eval_data = _read_uploaded_excel(eval_bytes, eval_filename)
+    train_data = _read_uploaded_dataset(train_bytes, train_filename)
+    eval_data = _read_uploaded_dataset(eval_bytes, eval_filename)
     _validate_uploaded_dataset(train_data, "Train")
     _validate_uploaded_dataset(eval_data, "Eval")
     _validate_feature_schema(train_data, eval_data)
 
-    _replace_file(TRAIN_DATA_FILE, train_bytes)
-    _replace_file(EVAL_DATA_FILE, eval_bytes)
+    _replace_dataset_file(TRAIN_DATA_FILE, train_data)
+    _replace_dataset_file(EVAL_DATA_FILE, eval_data)
     model_service.clear_latest_model_file()
     return build_dataset_profile()
 

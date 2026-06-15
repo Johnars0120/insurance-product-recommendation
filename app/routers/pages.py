@@ -26,12 +26,14 @@ def home(request: Request):
 @router.get("/data", include_in_schema=False)
 def data_page(request: Request):
     profile = build_dataset_profile()
+    show_analysis = request.query_params.get("uploaded") == "1"
     return templates.TemplateResponse(
         request,
         "data.html",
         {
             "active_page": "data",
             "profile": profile,
+            "show_analysis": show_analysis,
         },
     )
 
