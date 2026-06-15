@@ -19,6 +19,10 @@
 - 推荐结果支持历史查询和 `/api/recommend/export` CSV 导出。
 - 第二阶段测试记录见 [docs/第二阶段测试记录.md](docs/第二阶段测试记录.md)，答辩演示流程见 [docs/答辩演示流程.md](docs/答辩演示流程.md)。
 
+## 第三阶段开发方向
+
+第三阶段从 `origin/main` 开始，重点补充页面操作闭环、推荐理由增强、CI 自动测试和演示验收材料。第二阶段的 `codex/phase2-development` 已不再作为新功能开发基线。
+
 ## 快速运行
 
 ```powershell
@@ -75,7 +79,7 @@ insurance-product-recommendation/
 | 前端展示 | `feature/frontend` | Jinja2 页面、静态样式、ECharts 图表、推荐结果展示 |
 | 文档测试 | `feature/docs` | 开发记录、接口说明、测试记录、截图、答辩材料 |
 
-第二阶段开发请以 `codex/phase2-development` 为集成分支，并优先阅读 [docs/phase2/README.md](docs/phase2/README.md)。该目录已经按组长、后端持久化、数据算法、推荐结果、前端可视化、文档测试答辩拆分了详细开发文档。
+历史说明：第二阶段曾以 `codex/phase2-development` 为集成分支，相关分工可阅读 [docs/phase2/README.md](docs/phase2/README.md)。第三阶段新功能开发请以 `origin/main` 为起点，并优先阅读 [docs/phase3/README.md](docs/phase3/README.md)。
 
 ## GitHub 协作规则
 

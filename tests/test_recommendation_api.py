@@ -50,6 +50,39 @@ def client_with_recommendation_files(tmp_path, monkeypatch):
     }
 
 
+def test_build_recommendation_reason_mentions_high_probability():
+    reason = model_service._build_recommendation_reason(
+        probability=0.82,
+        level="high",
+        row={"age": 45, "income": 9000, "claims": 0},
+    )
+
+    assert "购买概率较高" in reason
+    assert "82.00%" in reason
+
+
+def test_build_recommendation_reason_mentions_medium_probability():
+    reason = model_service._build_recommendation_reason(
+        probability=0.55,
+        level="medium",
+        row={"age": 35, "income": 5200, "claims": 1},
+    )
+
+    assert "购买概率中等" in reason
+    assert "55.00%" in reason
+
+
+def test_build_recommendation_reason_mentions_low_probability():
+    reason = model_service._build_recommendation_reason(
+        probability=0.18,
+        level="low",
+        row={"age": 25, "income": 3000, "claims": 2},
+    )
+
+    assert "购买概率较低" in reason
+    assert "18.00%" in reason
+
+
 def test_predict_api_trains_if_needed_and_returns_recommendations(
     client_with_recommendation_files,
 ):
@@ -71,6 +104,8 @@ def test_predict_api_trains_if_needed_and_returns_recommendations(
     assert first["customer_id"] == "1"
     assert 0.0 <= first["probability"] <= 1.0
     assert first["recommend_level"] in {"high", "medium", "low"}
+    assert "预测概率" in first["reason"]
+    assert first["reason"]
     assert temp_model_file.exists()
 
 
