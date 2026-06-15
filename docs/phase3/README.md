@@ -33,7 +33,7 @@ python -m pytest -q
 如果在本地仓库中继续开发：
 
 ```powershell
-cd "F:\工程实践II\保险产品推荐\insurance-product-recommendation"
+cd path\to\insurance-product-recommendation
 git status --short --branch
 python -m pytest -q
 ```

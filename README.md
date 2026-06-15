@@ -1,40 +1,96 @@
 # 保险产品智能推荐系统
 
-本仓库用于团队协作开发“保险产品智能推荐系统”。项目第一版采用轻量 Web 系统方案，重点跑通数据读取、模型训练、模型评估、保险推荐、页面展示和结果导出流程。第二阶段在此基础上补充持久化、多模型对比、图表展示和答辩 QA 材料。
+## 项目介绍
+
+保险产品智能推荐系统是一个面向保险客户推荐场景的轻量级 Web 应用。系统基于历史客户数据训练分类模型，评估客户购买保险产品的可能性，并输出推荐等级、预测概率和推荐理由，帮助业务人员快速筛选值得优先跟进的客户。
+
+项目采用 FastAPI + Jinja2 + SQLite + scikit-learn 的技术路线，重点覆盖数据读取、模型训练、模型评估、推荐生成、历史记录、图表展示和 CSV 导出等完整流程。系统既可以通过浏览器页面演示，也可以通过 API 接口调用，适合作为课程实践、团队协作开发和答辩展示项目。
+
+## 核心功能
+
+- 数据概览：读取 `data/raw/data.xlsx` 和 `data/raw/eval.xlsx`，展示训练集、评估集、字段数量、正负样本数量等信息。
+- 模型训练：支持 `logistic_regression`、`decision_tree`、`random_forest` 三类模型训练。
+- 模型评估：展示 Accuracy、Precision、Recall、F1、AUC 等指标，并保存每次训练记录。
+- 模型对比：按模型类型查看最近训练结果，方便比较不同算法表现。
+- 智能推荐：根据最新模型对客户生成推荐结果，输出预测概率、推荐等级和推荐理由。
+- 推荐历史：保存推荐批次和推荐明细，系统重启后仍可查询。
+- 结果导出：支持将推荐结果导出为 CSV 文件。
+- 图表展示：使用 ECharts 展示样本分布、模型指标和推荐等级分布。
+- 自动测试：提供页面、接口、数据库、模型服务和推荐历史等测试用例。
 
 ## 技术路线
 
-- FastAPI：后端 Web 框架
-- Jinja2：页面模板
-- SQLite：本地轻量数据库
-- Pandas / openpyxl：Excel 数据读取与处理
-- scikit-learn：模型训练与评估
-- ECharts：前端图表展示
+| 模块 | 技术 |
+| --- | --- |
+| 后端框架 | FastAPI |
+| 页面模板 | Jinja2 |
+| 数据库 | SQLite、SQLAlchemy |
+| 数据处理 | Pandas、openpyxl、NumPy |
+| 机器学习 | scikit-learn、joblib |
+| 图表展示 | ECharts |
+| 自动测试 | pytest、httpx |
 
-## 第二阶段新增能力
+## 环境要求
 
-- SQLite 持久化训练记录、指标记录和推荐结果，系统重启后仍可查询最近训练和推荐历史。
-- 支持 `logistic_regression`、`decision_tree`、`random_forest` 三类模型训练，并通过 `/api/models/compare` 对比 Accuracy、Precision、Recall、F1、AUC。
-- `/data`、`/evaluate`、`/recommend` 页面接入 ECharts，分别展示正负样本比例、模型指标对比和推荐等级分布。
-- 推荐结果支持历史查询和 `/api/recommend/export` CSV 导出。
-- 第二阶段测试记录见 [docs/第二阶段测试记录.md](docs/第二阶段测试记录.md)，答辩演示流程见 [docs/答辩演示流程.md](docs/答辩演示流程.md)。
+建议使用以下环境运行项目：
 
-## 第三阶段开发方向
+- Windows 10/11
+- Python 3.10 或更高版本
+- Git
+- 浏览器：Edge、Chrome 或 Firefox
 
-第三阶段从 `origin/main` 开始，重点补充页面操作闭环、推荐理由增强、CI 自动测试和演示验收材料。第二阶段的 `phase2/integration` 已不再作为新功能开发基线。
+可以通过下面命令确认 Python 和 Git 是否可用：
 
-## 快速运行
+```powershell
+python --version
+git --version
+```
+
+## 快速启动
+
+### 1. 获取项目代码
 
 ```powershell
 git clone https://github.com/Johnars0120/insurance-product-recommendation.git
 cd insurance-product-recommendation
+```
+
+如果已经有本地仓库，直接进入项目目录并同步最新代码：
+
+```powershell
+cd path\to\insurance-product-recommendation
+git switch main
+git pull origin main
+```
+
+### 2. 创建并激活虚拟环境
+
+```powershell
 python -m venv .venv
 .venv\Scripts\activate
+```
+
+激活成功后，命令行前面通常会出现 `(.venv)`。
+
+### 3. 安装依赖
+
+```powershell
 pip install -r requirements.txt
+```
+
+如果下载速度较慢，可以使用国内镜像：
+
+```powershell
+pip install -r requirements.txt -i https://pypi.tuna.tsinghua.edu.cn/simple
+```
+
+### 4. 启动系统
+
+```powershell
 uvicorn app.main:app --reload --host 127.0.0.1 --port 8000
 ```
 
-浏览器访问：
+启动后浏览器访问：
 
 ```text
 http://127.0.0.1:8000
@@ -46,10 +102,287 @@ http://127.0.0.1:8000
 http://127.0.0.1:8000/docs
 ```
 
+健康检查地址：
+
+```text
+http://127.0.0.1:8000/health
+```
+
+## 页面使用教程
+
+推荐按照下面顺序演示和使用系统。
+
+### 1. 首页
+
+访问：
+
+```text
+http://127.0.0.1:8000/
+```
+
+首页用于进入数据概览、模型训练、模型评估和保险推荐等主要页面。
+
+### 2. 数据概览
+
+访问：
+
+```text
+http://127.0.0.1:8000/data
+```
+
+数据概览页面会读取本地 Excel 数据文件，展示训练集和评估集的基本情况。页面中的图表用于查看训练数据中正样本和负样本的数量分布。
+
+项目默认数据文件位置：
+
+```text
+data/raw/data.xlsx
+data/raw/eval.xlsx
+```
+
+如果需要替换数据文件，建议保持文件名不变，并确保训练集和评估集都包含目标字段：
+
+```text
+移动房车险数量
+```
+
+### 3. 模型训练
+
+访问：
+
+```text
+http://127.0.0.1:8000/train
+```
+
+训练页面支持选择模型并发起训练。当前支持的模型名称包括：
+
+| 模型名称 | 说明 |
+| --- | --- |
+| `logistic_regression` | 逻辑回归，适合作为基线模型 |
+| `decision_tree` | 决策树，便于解释规则和特征划分 |
+| `random_forest` | 随机森林，适合提升整体预测稳定性 |
+
+训练完成后，系统会保存模型文件和训练记录：
+
+```text
+saved_models/latest_model.joblib
+```
+
+训练记录会写入本地 SQLite 数据库。数据库文件属于本地运行产物，不需要提交到仓库。
+
+### 4. 模型评估
+
+访问：
+
+```text
+http://127.0.0.1:8000/evaluate
+```
+
+模型评估页面用于查看最近训练模型的指标结果，包括：
+
+- Accuracy：整体预测准确率
+- Precision：预测为正样本时的准确程度
+- Recall：正样本被识别出来的比例
+- F1：Precision 和 Recall 的综合指标
+- AUC：模型区分正负样本的能力
+
+页面也会展示不同模型的指标对比图，方便选择更适合当前数据的模型。
+
+### 5. 智能推荐
+
+访问：
+
+```text
+http://127.0.0.1:8000/recommend
+```
+
+推荐页面会基于最新训练模型生成客户推荐结果。推荐结果包含：
+
+- 客户编号
+- 预测购买概率
+- 推荐等级：`high`、`medium`、`low`
+- 推荐理由
+
+推荐等级规则：
+
+| 推荐等级 | 概率范围 | 建议 |
+| --- | --- | --- |
+| `high` | 大于等于 70% | 优先跟进 |
+| `medium` | 40% 到 70% | 可结合人工判断继续触达 |
+| `low` | 小于 40% | 暂缓高优先级推荐 |
+
+生成推荐后，可以在页面查看历史推荐结果，也可以导出 CSV 文件用于提交、汇报或进一步分析。
+
+## API 使用说明
+
+系统启动后，可以通过 `http://127.0.0.1:8000/docs` 查看自动生成的接口文档。下面列出常用接口。
+
+### 数据概览
+
+```http
+GET /api/datasets/profile
+```
+
+返回训练集和评估集的数据行数、字段数量、正负样本统计等信息。
+
+### 训练模型
+
+```http
+POST /api/models/train
+Content-Type: application/json
+
+{
+  "model_name": "logistic_regression"
+}
+```
+
+`model_name` 可选值：
+
+```text
+logistic_regression
+decision_tree
+random_forest
+```
+
+### 查看训练记录
+
+```http
+GET /api/models/runs
+```
+
+返回历史模型训练记录。
+
+### 对比模型指标
+
+```http
+GET /api/models/compare
+```
+
+返回不同模型最近一次训练的指标对比。
+
+### 查看最近模型评估结果
+
+```http
+GET /api/models/evaluate
+```
+
+如果还没有训练记录，该接口会返回 `404`。先训练模型后再查看评估结果即可。
+
+### 生成推荐结果
+
+```http
+POST /api/recommend/predict
+Content-Type: application/json
+
+{
+  "limit": 20
+}
+```
+
+`limit` 表示本次最多生成多少条推荐结果。
+
+### 查看推荐历史
+
+```http
+GET /api/recommend/history
+```
+
+也可以指定推荐批次和数量：
+
+```http
+GET /api/recommend/history?run_id=推荐批次ID&limit=100
+```
+
+### 导出推荐结果
+
+```http
+GET /api/recommend/export
+```
+
+返回 CSV 文件，字段包括：
+
+```text
+customer_id, probability, recommend_level, reason
+```
+
+### 图表数据接口
+
+```http
+GET /api/charts/dataset
+GET /api/charts/model-metrics
+GET /api/charts/recommend-levels
+```
+
+这些接口主要供前端 ECharts 图表使用。
+
+## 测试方法
+
+运行全部测试：
+
+```powershell
+python -m pytest -q
+```
+
+项目测试覆盖内容包括：
+
+- 应用启动和健康检查
+- 页面访问
+- 数据集概览
+- 模型训练与评估
+- 模型历史记录
+- 模型对比接口
+- 推荐生成接口
+- 推荐历史和导出
+- 图表数据接口
+- SQLite 持久化逻辑
+
+如果测试过程中生成了本地数据库、模型文件或缓存文件，这些属于运行产物，已经通过 `.gitignore` 排除。
+
+## 常见问题
+
+### 端口 8000 被占用
+
+可以换一个端口启动：
+
+```powershell
+uvicorn app.main:app --reload --host 127.0.0.1 --port 8001
+```
+
+然后访问：
+
+```text
+http://127.0.0.1:8001
+```
+
+### 依赖安装失败
+
+先确认虚拟环境已激活，再升级 pip：
+
+```powershell
+python -m pip install --upgrade pip
+pip install -r requirements.txt
+```
+
+如果网络较慢，可以使用镜像源安装。
+
+### 页面没有推荐结果
+
+推荐结果依赖模型文件。如果还没有训练过模型，可以先进入训练页面训练一个模型，再进入推荐页面生成推荐。接口层面也会在缺少模型时自动训练默认模型，但演示时建议先手动训练，流程更清晰。
+
+### 模型评估接口返回 404
+
+说明当前还没有模型训练记录。先访问 `/train` 页面训练模型，或调用 `/api/models/train` 接口。
+
+### 替换数据后训练失败
+
+请检查训练集和评估集是否都包含目标字段 `移动房车险数量`，并确保训练集和评估集的特征字段一致。
+
 ## 目录结构
 
 ```text
 insurance-product-recommendation/
+├─ .github/
+│  ├─ workflows/
+│  └─ pull_request_template.md
 ├─ app/
 │  ├─ main.py
 │  ├─ config.py
@@ -61,35 +394,59 @@ insurance-product-recommendation/
 │  └─ static/
 ├─ data/
 │  ├─ raw/
+│  │  ├─ data.xlsx
+│  │  └─ eval.xlsx
 │  ├─ processed/
 │  └─ output/
-├─ saved_models/
 ├─ docs/
+├─ saved_models/
 ├─ tests/
+├─ CONTRIBUTORS.md
 ├─ requirements.txt
 └─ README.md
 ```
 
-## 分工建议
+主要目录说明：
 
-| 方向 | 分支 | 主要任务 |
-| --- | --- | --- |
-| 数据与算法 | `feature/data-model` | 数据读取、预处理、模型训练、模型评估、预测函数封装 |
-| 后端接口 | `feature/backend` | FastAPI 路由、接口、SQLite 记录、服务层整合 |
-| 前端展示 | `feature/frontend` | Jinja2 页面、静态样式、ECharts 图表、推荐结果展示 |
-| 文档测试 | `feature/docs` | 开发记录、接口说明、测试记录、截图、答辩材料 |
+| 路径 | 说明 |
+| --- | --- |
+| `app/main.py` | FastAPI 应用入口 |
+| `app/routers/` | 页面和 API 路由 |
+| `app/services/` | 数据处理、模型训练、历史记录等业务逻辑 |
+| `app/models/` | 数据库模型定义 |
+| `app/templates/` | Jinja2 页面模板 |
+| `app/static/` | CSS 等静态资源 |
+| `data/raw/` | 原始 Excel 数据 |
+| `docs/` | 项目文档、测试记录和演示流程 |
+| `saved_models/` | 本地训练模型输出目录 |
+| `tests/` | 自动化测试用例 |
 
-历史说明：第二阶段曾以 `phase2/integration` 为集成分支，相关分工可阅读 [docs/phase2/README.md](docs/phase2/README.md)。第三阶段新功能开发请以 `origin/main` 为起点，并优先阅读 [docs/phase3/README.md](docs/phase3/README.md)。
+## 项目文档
 
-## GitHub 协作规则
+- [接口说明](docs/接口说明.md)
+- [开发任务看板](docs/开发任务看板.md)
+- [协同开发说明](docs/协同开发说明.md)
+- [答辩演示流程](docs/答辩演示流程.md)
+- [第二阶段测试记录](docs/第二阶段测试记录.md)
+- [第三阶段测试记录](docs/第三阶段测试记录.md)
+- [第三阶段演示流程](docs/第三阶段演示流程.md)
 
-1. `main` 分支只放稳定版本。
-2. 组员不要直接向 `main` 提交代码。
-3. 每位组员在自己的功能分支上开发。
-4. 每次开始开发前先同步最新代码。
-5. 每完成一个小功能就提交一次 commit。
-6. 功能完成后发 Pull Request，由组长检查后合并。
-7. 涉及接口名称、字段名称、目录结构的修改，先在群里确认。
+## 协作规则
 
+1. `main` 分支只保留稳定版本。
+2. 开发新功能前先同步最新代码。
+3. 新功能建议从 `origin/main` 新建独立分支。
+4. 每完成一个相对独立的小功能就提交一次 commit。
+5. 功能完成后发起 Pull Request，再合并到 `main`。
+6. 涉及接口名称、字段名称、目录结构的调整，先在团队内确认。
 
-更多协作细节见 [docs/协同开发说明.md](docs/协同开发说明.md)。
+新建开发分支示例：
+
+```powershell
+git fetch origin
+git switch -c feature/your-feature origin/main
+```
+
+## 当前状态
+
+项目当前已完成基础推荐闭环、持久化记录、多模型对比、图表展示、推荐历史、CSV 导出和自动化测试，适合继续围绕推荐质量、页面体验、系统稳定性和答辩材料进行完善。
