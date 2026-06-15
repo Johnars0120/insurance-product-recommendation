@@ -429,7 +429,7 @@ Create `docs/第三阶段测试记录.md` with these sections:
 ```powershell
 python -m pytest -q
 git diff --check
-rg -n "TB[D]|TO[DO]|待补[充]" README.md docs
+rg -n "TB[D]|TOD[O]|待补[充]" README.md docs
 ```
 ```
 
@@ -463,7 +463,7 @@ uvicorn app.main:app --reload --host 127.0.0.1 --port 8000
 ```powershell
 python -m pytest -q
 git diff --check
-rg -n "TB[D]|TO[DO]|待补[充]" README.md docs
+rg -n "TB[D]|TOD[O]|待补[充]" README.md docs
 ```
 
 Expected result: pytest passes, `git diff --check` exits 0, and the `rg` command has no output.
@@ -482,6 +482,6 @@ git commit -m "docs: add phase3 delivery workflow"
 - [ ] Branch starts from `origin/main`, not `codex/phase2-development`.
 - [ ] `python -m pytest -q` passes.
 - [ ] `git diff --check` passes.
-- [ ] `rg -n "TB[D]|TO[DO]|待补[充]" README.md docs` has no output.
+- [ ] `rg -n "TB[D]|TOD[O]|待补[充]" README.md docs` has no output.
 - [ ] Runtime files are not staged: `*.db`, `*.sqlite`, `saved_models/*.joblib`, exported CSV files.
 - [ ] PR description includes completed content, modified files, test command, test result, compatibility notes, and screenshots or demo notes.

@@ -75,7 +75,7 @@ python -m pytest -q
 ```powershell
 python -m pytest -q
 git diff --check
-rg -n "TB[D]|TO[DO]|待补[充]" README.md docs
+rg -n "TB[D]|TOD[O]|待补[充]" README.md docs
 ```
 
 ## PR Strategy
