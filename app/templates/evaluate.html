@@ -112,6 +112,9 @@
 
     fetch("/api/models/runs")
         .then(function (response) {
+            if (!response.ok) {
+                throw new Error("Model runs request failed");
+            }
             return response.json();
         })
         .then(renderRuns)

@@ -37,7 +37,7 @@
     <div class="form-row">
         <label for="recommend-limit">
             推荐数量
-            <input id="recommend-limit" name="limit" type="number" min="1" value="20">
+            <input id="recommend-limit" name="limit" type="number" min="1" step="1" value="20">
         </label>
         <button id="predict-recommend-button" class="button" type="button">生成推荐</button>
     </div>
@@ -169,9 +169,9 @@
     }
 
     button.addEventListener("click", function () {
-        var limit = parseInt(limitInput.value, 10);
-        if (!limit || limit < 1) {
-            status.textContent = "推荐数量必须大于 0。";
+        var limit = Number(limitInput.value);
+        if (!Number.isInteger(limit) || limit < 1) {
+            status.textContent = "推荐数量必须是大于 0 的整数。";
             return;
         }
 

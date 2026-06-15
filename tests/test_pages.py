@@ -78,11 +78,46 @@ def test_train_page_contains_phase3_training_controls(client):
     assert 'id="train-result"' in response.text
 
 
+def test_train_page_contains_training_api_contract(client):
+    response = client.get("/train")
+
+    assert response.status_code == 200
+    expected_fragments = [
+        'fetch("/api/models/train"',
+        'method: "POST"',
+        "JSON.stringify({model_name: modelName})",
+        "data.run_id",
+        "data.model_name",
+        "data.train_rows",
+        "data.eval_rows",
+        "data.metrics",
+    ]
+    for fragment in expected_fragments:
+        assert fragment in response.text
+
+
 def test_evaluate_page_contains_recent_runs_table(client):
     response = client.get("/evaluate")
 
     assert response.status_code == 200
     assert 'id="recent-runs-table"' in response.text
+
+
+def test_evaluate_page_contains_runs_api_contract(client):
+    response = client.get("/evaluate")
+
+    assert response.status_code == 200
+    expected_fragments = [
+        'fetch("/api/models/runs")',
+        "if (!response.ok)",
+        "<th>模型</th>",
+        "<th>运行编号</th>",
+        "<th>训练行数</th>",
+        "<th>评估行数</th>",
+        "<th>创建时间</th>",
+    ]
+    for fragment in expected_fragments:
+        assert fragment in response.text
 
 
 def test_recommend_page_contains_phase3_prediction_controls(client):
@@ -93,6 +128,27 @@ def test_recommend_page_contains_phase3_prediction_controls(client):
     assert 'id="predict-recommend-button"' in response.text
     assert 'id="recommend-results-table"' in response.text
     assert 'id="recommend-history-table"' in response.text
+
+
+def test_recommend_page_contains_prediction_api_contract(client):
+    response = client.get("/recommend")
+
+    assert response.status_code == 200
+    expected_fragments = [
+        'fetch("/api/recommend/predict"',
+        'method: "POST"',
+        "JSON.stringify({limit: limit})",
+        'fetch("/api/recommend/history")',
+        "item.customer_id",
+        "item.probability",
+        "item.recommend_level",
+        "item.reason",
+        'step="1"',
+        "Number(limitInput.value)",
+        "Number.isInteger(limit)",
+    ]
+    for fragment in expected_fragments:
+        assert fragment in response.text
 
 
 def test_static_css_route_returns_stylesheet():
