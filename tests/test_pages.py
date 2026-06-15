@@ -59,6 +59,33 @@ def test_second_stage_pages_include_chart_containers():
         assert container in response.text
 
 
+def test_data_page_contains_dataset_upload_controls(client):
+    response = client.get("/data")
+
+    assert response.status_code == 200
+    expected_fragments = [
+        'id="dataset-upload-form"',
+        'id="train-file"',
+        'id="eval-file"',
+        'accept=".xlsx"',
+        'fetch("/api/datasets/upload"',
+        "FormData(form)",
+    ]
+    for fragment in expected_fragments:
+        assert fragment in response.text
+
+
+def test_frontend_pages_do_not_use_delivery_only_wording(client):
+    forbidden_terms = ["答辩", "课程实践", "报告截图"]
+
+    for path in ["/", "/data", "/train", "/evaluate", "/recommend"]:
+        response = client.get(path)
+
+        assert response.status_code == 200
+        for term in forbidden_terms:
+            assert term not in response.text
+
+
 def test_recommend_page_links_to_export_api():
     client = TestClient(app)
 

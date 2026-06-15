@@ -320,3 +320,10 @@ def reset_latest_run():
     global LATEST_RUN
 
     LATEST_RUN = None
+
+
+def clear_latest_model_file():
+    model_path = _latest_model_path()
+    if model_path.exists():
+        model_path.unlink()
+    reset_latest_run()

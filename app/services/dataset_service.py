@@ -1,6 +1,64 @@
+from pathlib import Path
+import tempfile
+
 import pandas as pd
 
 from app.config import EVAL_DATA_FILE, TARGET_COLUMN, TRAIN_DATA_FILE
+from app.services import model_service
+
+
+def _read_uploaded_excel(file_bytes, filename):
+    if not filename.lower().endswith(".xlsx"):
+        raise ValueError("Only .xlsx dataset files are supported")
+
+    try:
+        from io import BytesIO
+
+        return pd.read_excel(BytesIO(file_bytes))
+    except Exception as exc:
+        raise ValueError(f"Could not read Excel file '{filename}': {exc}") from exc
+
+
+def _validate_uploaded_dataset(data, label):
+    if TARGET_COLUMN not in data.columns:
+        raise ValueError(f"{label} dataset must contain target column '{TARGET_COLUMN}'")
+
+
+def _validate_feature_schema(train_data, eval_data):
+    train_features = [column for column in train_data.columns if column != TARGET_COLUMN]
+    eval_features = [column for column in eval_data.columns if column != TARGET_COLUMN]
+    missing_in_eval = [column for column in train_features if column not in eval_features]
+    extra_in_eval = [column for column in eval_features if column not in train_features]
+
+    if missing_in_eval or extra_in_eval:
+        details = []
+        if missing_in_eval:
+            details.append("missing in eval: " + ", ".join(missing_in_eval))
+        if extra_in_eval:
+            details.append("extra in eval: " + ", ".join(extra_in_eval))
+        raise ValueError("Train and eval feature columns must match; " + "; ".join(details))
+
+
+def _replace_file(file_path, file_bytes):
+    file_path = Path(file_path)
+    file_path.parent.mkdir(parents=True, exist_ok=True)
+    with tempfile.NamedTemporaryFile(delete=False, dir=file_path.parent, suffix=file_path.suffix) as temp_file:
+        temp_file.write(file_bytes)
+        temp_path = Path(temp_file.name)
+    temp_path.replace(file_path)
+
+
+def save_uploaded_datasets(train_bytes, train_filename, eval_bytes, eval_filename):
+    train_data = _read_uploaded_excel(train_bytes, train_filename)
+    eval_data = _read_uploaded_excel(eval_bytes, eval_filename)
+    _validate_uploaded_dataset(train_data, "Train")
+    _validate_uploaded_dataset(eval_data, "Eval")
+    _validate_feature_schema(train_data, eval_data)
+
+    _replace_file(TRAIN_DATA_FILE, train_bytes)
+    _replace_file(EVAL_DATA_FILE, eval_bytes)
+    model_service.clear_latest_model_file()
+    return build_dataset_profile()
 
 
 def summarize_dataset(file_path):

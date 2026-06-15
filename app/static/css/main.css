@@ -287,6 +287,13 @@ pre {
     align-items: flex-end;
 }
 
+.upload-form {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(220px, 1fr)) auto;
+    gap: 12px;
+    align-items: end;
+}
+
 label {
     display: grid;
     gap: 6px;
@@ -305,6 +312,10 @@ input {
     background: var(--surface);
     color: var(--text);
     font: inherit;
+}
+
+input[type="file"] {
+    padding: 7px 10px;
 }
 
 select:focus,
@@ -338,6 +349,11 @@ input:focus {
 .status-box {
     margin-top: 12px;
     color: var(--muted);
+}
+
+.hint {
+    margin: 12px 0 0;
+    font-size: 14px;
 }
 
 .table-wrap {
@@ -422,7 +438,8 @@ input:focus {
     .cols-2,
     .details,
     .metrics,
-    .metrics-wide {
+    .metrics-wide,
+    .upload-form {
         grid-template-columns: 1fr;
     }
 }

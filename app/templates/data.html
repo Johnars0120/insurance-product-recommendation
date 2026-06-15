@@ -6,7 +6,27 @@
 <section class="page-heading">
     <p class="eyebrow">Dataset</p>
     <h1>数据概览</h1>
-    <p>目标字段：<strong>{{ profile.target_column }}</strong>；特征字段 {{ profile.feature_columns | length }} 个。</p>
+    <p>上传或查看当前训练集与评估集。目标字段：<strong>{{ profile.target_column }}</strong>；特征字段 {{ profile.feature_columns | length }} 个。</p>
+</section>
+
+<section class="panel">
+    <div class="section-title">
+        <h2>上传数据集</h2>
+        <code>POST /api/datasets/upload</code>
+    </div>
+    <form id="dataset-upload-form" class="upload-form">
+        <label for="train-file">
+            训练集 Excel
+            <input id="train-file" name="train_file" type="file" accept=".xlsx" required>
+        </label>
+        <label for="eval-file">
+            评估集 Excel
+            <input id="eval-file" name="eval_file" type="file" accept=".xlsx" required>
+        </label>
+        <button id="dataset-upload-button" class="button" type="submit">上传并替换数据</button>
+    </form>
+    <p class="hint">训练集和评估集需要包含相同的特征字段，并都包含目标字段 <code>{{ profile.target_column }}</code>。上传成功后请重新训练模型。</p>
+    <div id="dataset-upload-status" class="status-box" aria-live="polite"></div>
 </section>
 
 <section class="grid cols-2">
@@ -49,12 +69,59 @@
         <h2>接口</h2>
         <code>GET /api/datasets/profile</code>
     </div>
-    <p>该接口返回本页使用的基础统计信息，供前端展示和报告截图使用。</p>
+    <p>该接口返回本页使用的基础统计信息，可供前端页面、外部系统或数据检查流程调用。</p>
 </section>
 {% endblock %}
 
 {% block scripts %}
 <script>
+(function () {
+    var form = document.getElementById("dataset-upload-form");
+    var button = document.getElementById("dataset-upload-button");
+    var status = document.getElementById("dataset-upload-status");
+    if (!form || !button || !status) {
+        return;
+    }
+
+    function parseJsonResponse(response) {
+        return response.json().then(function (data) {
+            if (!response.ok) {
+                throw data;
+            }
+            return data;
+        });
+    }
+
+    form.addEventListener("submit", function (event) {
+        event.preventDefault();
+        var formData = new FormData(form);
+        button.disabled = true;
+        status.textContent = "正在上传并校验数据集...";
+
+        fetch("/api/datasets/upload", {
+            method: "POST",
+            body: formData
+        })
+            .then(parseJsonResponse)
+            .then(function (data) {
+                status.textContent = "上传成功。训练集 "
+                    + data.profile.train.rows
+                    + " 行，评估集 "
+                    + data.profile.eval.rows
+                    + " 行。页面即将刷新，请重新训练模型。";
+                window.setTimeout(function () {
+                    window.location.reload();
+                }, 800);
+            })
+            .catch(function (error) {
+                status.textContent = error.detail || "上传失败，请检查文件格式和字段。";
+            })
+            .then(function () {
+                button.disabled = false;
+            });
+    });
+}());
+
 (function () {
     var container = document.getElementById("dataset-chart");
     if (!container || !window.echarts) {
