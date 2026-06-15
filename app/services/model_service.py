@@ -16,11 +16,6 @@ from app.services import history_service
 
 LATEST_RUN = None
 SUPPORTED_MODELS = ("logistic_regression", "decision_tree", "random_forest")
-RECOMMENDATION_REASONS = {
-    "high": "模型预测购买概率较高",
-    "medium": "模型预测购买概率中等",
-    "low": "模型预测购买概率较低",
-}
 
 
 def _load_training_data():
@@ -104,6 +99,27 @@ def _recommend_level(probability):
     if probability >= 0.40:
         return "medium"
     return "low"
+
+
+def _format_feature_hint(row):
+    hints = []
+    for column in ("age", "income", "claims"):
+        if column in row:
+            hints.append(f"{column}={row[column]}")
+    if not hints:
+        return "当前客户特征已纳入模型综合判断"
+    return "关键特征：" + "，".join(hints)
+
+
+def _build_recommendation_reason(probability, level, row):
+    probability_text = f"{probability:.2%}"
+    level_messages = {
+        "high": "购买概率较高，建议优先跟进",
+        "medium": "购买概率中等，可结合人工复核安排触达",
+        "low": "购买概率较低，建议暂缓高优先级推荐",
+    }
+    message = level_messages.get(level, "模型已生成推荐判断")
+    return f"{message}；预测概率为 {probability_text}；{_format_feature_hint(row)}"
 
 
 def _load_latest_model_bundle():
@@ -269,12 +285,18 @@ def predict_recommendations(limit=20):
     for row_index, probability in enumerate(probabilities[:effective_limit], start=1):
         probability = float(probability)
         level = _recommend_level(probability)
+        row = eval_data.iloc[row_index - 1].to_dict()
+        reason = _build_recommendation_reason(
+            probability=probability,
+            level=level,
+            row=row,
+        )
         items.append(
             {
                 "customer_id": str(row_index),
                 "probability": probability,
                 "recommend_level": level,
-                "reason": RECOMMENDATION_REASONS[level],
+                "reason": reason,
             }
         )
 
