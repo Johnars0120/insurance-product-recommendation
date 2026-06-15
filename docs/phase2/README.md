@@ -1,11 +1,11 @@
 # 第二阶段开发文档索引
 
-本文档目录用于第二阶段小组分工、开发实施、PR 检查和答辩材料准备。第二阶段统一从 `codex/phase2-development` 开始，不直接修改 `main`。
+本文档目录用于第二阶段小组分工、开发实施、PR 检查和答辩材料准备。第二阶段统一从 `phase2/integration` 开始，不直接修改 `main`。
 
 ## 当前开发基线
 
 - GitHub 仓库：<https://github.com/Johnars0120/insurance-product-recommendation>
-- 第二阶段集成分支：`codex/phase2-development`
+- 第二阶段集成分支：`phase2/integration`
 - 已完成基础：第一阶段 MVP 已合并到 `main`；第二阶段 SQLite 基础表和数据库连接已完成。
 - 第二阶段目标：持久化训练和推荐历史、多模型对比、图表展示、推荐结果导出、测试记录和答辩材料。
 
@@ -27,7 +27,7 @@
 
 | 成员 | 角色 | 推荐分支 |
 | --- | --- | --- |
-| 组长 | 集成验收 | `codex/phase2-development` |
+| 组长 | 集成验收 | `phase2/integration` |
 | 成员 A | 后端持久化 | `phase2/backend-history` |
 | 成员 B | 数据与算法 | `phase2/model-compare` |
 | 成员 C | 推荐结果模块 | `phase2/recommend-export` |
@@ -40,7 +40,7 @@
 
 ```powershell
 git fetch origin
-git switch -c phase2/backend-history origin/codex/phase2-development
+git switch -c phase2/backend-history origin/phase2/integration
 python -m venv .venv
 .venv\Scripts\activate
 pip install -r requirements.txt

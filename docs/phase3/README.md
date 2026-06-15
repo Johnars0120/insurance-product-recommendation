@@ -1,6 +1,6 @@
 # 第三阶段开发索引
 
-本文档用于第三阶段开发分工、分支管理、PR 提交和最终验收。第三阶段统一从 `origin/main` 开始，不再从 `codex/phase2-development` 开始。
+本文档用于第三阶段开发分工、分支管理、PR 提交和最终验收。第三阶段统一从 `origin/main` 开始，不再从 `phase2/integration` 开始。
 
 ## 当前开发基线
 
@@ -8,7 +8,6 @@
 - 第三阶段起点：`origin/main`
 - 当前确认提交：`78406b1 docs: confirm recommendation contributor credit`
 - 当前总开发分支：`phase3/productization`
-- 当前工作树：`.worktrees/phase3-productization`
 - 基线测试：`python -m pytest -q`，结果为 `62 passed`
 
 ## 三个合并角色
@@ -31,10 +30,10 @@ git switch -c phase3/productization origin/main
 python -m pytest -q
 ```
 
-如果使用当前已创建的 worktree：
+如果在本地仓库中继续开发：
 
 ```powershell
-cd "F:\工程实践II\保险产品推荐\insurance-product-recommendation\.worktrees\phase3-productization"
+cd "F:\工程实践II\保险产品推荐\insurance-product-recommendation"
 git status --short --branch
 python -m pytest -q
 ```
