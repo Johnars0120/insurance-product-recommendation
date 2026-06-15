@@ -9,7 +9,7 @@
 - 当前确认提交：`78406b1 docs: confirm recommendation contributor credit`
 - 当前总开发分支：`phase3/productization`
 - 当前工作树：`.worktrees/phase3-productization`
-- 基线测试：`python -m pytest -q`，结果为 `53 passed`
+- 基线测试：`python -m pytest -q`，结果为 `62 passed`
 
 ## 三个合并角色
 
@@ -44,6 +44,12 @@ python -m pytest -q
 1. 先做页面闭环，让系统具备完整浏览器演示路径。
 2. 再做推荐解释，让输出结果更有说服力。
 3. 最后做 CI 与文档验收，把测试记录、演示步骤和截图清单补齐。
+
+## 第三阶段交付材料
+
+- CI 自动测试：[.github/workflows/tests.yml](../../.github/workflows/tests.yml)
+- 测试记录：[docs/第三阶段测试记录.md](../第三阶段测试记录.md)
+- 演示流程：[docs/第三阶段演示流程.md](../第三阶段演示流程.md)
 
 ## 每个 PR 必填内容
 
