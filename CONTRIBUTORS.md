@@ -22,3 +22,4 @@ team members' GitHub accounts.
 ## Contribution Confirmation
 
 - All-z09 completed the Phase 2 backend persistence work.
+- mlml666 completed the Phase 2 recommendation history and CSV export work.
