@@ -4,30 +4,72 @@
 
 {% block content %}
 <section class="page-heading">
-    <p class="eyebrow">Evaluation</p>
+    <p class="eyebrow">模型运营流程</p>
     <h1>模型评估</h1>
-    <p>展示最近一次训练运行的 Accuracy、Precision、Recall、F1 与 AUC。</p>
+    <p>模型质量看板用于判断当前模型是否适合进入推荐环节，并帮助比较不同算法的表现。</p>
+</section>
+
+<section class="workflow-strip" aria-label="模型运营流程">
+    <a class="workflow-step is-done" href="/data">
+        <span>1</span>
+        <strong>数据准备</strong>
+    </a>
+    <a class="workflow-step is-done" href="/train">
+        <span>2</span>
+        <strong>模型训练</strong>
+    </a>
+    <span class="workflow-step is-current" aria-current="step">
+        <span>3</span>
+        <strong>模型评估</strong>
+    </span>
+    <a class="workflow-step" href="/recommend">
+        <span>4</span>
+        <strong>推荐生成</strong>
+    </a>
 </section>
 
 <section class="panel">
     <div class="section-title">
-        <h2>评估指标</h2>
+        <div>
+            <span class="card-label">模型质量看板</span>
+            <h2>最新模型表现</h2>
+            <p>用于判断当前模型是否适合进入推荐环节。</p>
+        </div>
         <a class="text-link" href="/api/models/evaluate">评估 API</a>
     </div>
     {% if latest_run %}
-    <dl class="metrics metrics-wide">
-        {% for key, value in latest_run.metrics.items() %}
-        <div><dt>{{ key }}</dt><dd>{{ "%.4f" | format(value) }}</dd></div>
-        {% endfor %}
+    <dl class="metrics metrics-wide metric-explainer">
+        <div><dt>Accuracy</dt><dd>{{ "%.4f" | format(latest_run.metrics.get("accuracy", 0)) }}</dd><span>整体预测正确率</span></div>
+        <div><dt>Precision</dt><dd>{{ "%.4f" | format(latest_run.metrics.get("precision", 0)) }}</dd><span>推荐名单准确性</span></div>
+        <div><dt>Recall</dt><dd>{{ "%.4f" | format(latest_run.metrics.get("recall", 0)) }}</dd><span>潜在客户覆盖能力</span></div>
+        <div><dt>F1</dt><dd>{{ "%.4f" | format(latest_run.metrics.get("f1", 0)) }}</dd><span>准确性与覆盖率平衡</span></div>
+        <div><dt>AUC</dt><dd>{{ "%.4f" | format(latest_run.metrics.get("auc", 0)) }}</dd><span>模型区分能力</span></div>
     </dl>
+    <div class="next-action-bar">
+        <p>指标确认后，可以使用当前最新模型生成客户推荐名单。</p>
+        <a class="button" href="/recommend">生成推荐名单</a>
+    </div>
     {% else %}
-    <p class="empty">暂无评估结果。请先通过 <code>POST /api/models/train</code> 完成一次模型训练。</p>
+    <div class="status-box is-empty">
+        暂无评估结果。请先完成一次模型训练，再回到本页查看指标；指标确认后即可生成推荐名单。
+        <a class="text-link" href="/train">前往模型训练</a>
+    </div>
     {% endif %}
+    <div class="metric-guide" aria-label="评估指标说明">
+        <span><strong>Accuracy</strong> 整体预测正确率</span>
+        <span><strong>Precision</strong> 推荐名单准确性</span>
+        <span><strong>Recall</strong> 潜在客户覆盖能力</span>
+        <span><strong>F1</strong> 准确性与覆盖率平衡</span>
+        <span><strong>AUC</strong> 模型区分能力</span>
+    </div>
 </section>
 
 <section class="panel">
     <div class="section-title">
-        <h2>最近训练运行</h2>
+        <div>
+            <span class="card-label">训练历史</span>
+            <h2>最近训练运行</h2>
+        </div>
         <a class="text-link" href="/api/models/runs">运行记录 API</a>
     </div>
     <div class="table-wrap">
@@ -62,7 +104,10 @@
 
 <section class="panel">
     <div class="section-title">
-        <h2>模型指标对比</h2>
+        <div>
+            <span class="card-label">指标对比</span>
+            <h2>模型指标对比</h2>
+        </div>
         <a class="text-link" href="/api/models/compare">对比 API</a>
     </div>
     <div id="metrics-chart" class="chart-container" role="img" aria-label="模型指标对比"></div>
@@ -144,7 +189,10 @@
             chart.setOption({
                 color: ["#176b56", "#476b91", "#8a5a13", "#6d5b8d", "#c05a28"],
                 tooltip: {
-                    trigger: "axis"
+                    trigger: "axis",
+                    valueFormatter: function (value) {
+                        return typeof value === "number" ? value.toFixed(4) : value;
+                    }
                 },
                 legend: {
                     top: 0

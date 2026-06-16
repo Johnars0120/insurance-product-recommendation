@@ -4,35 +4,52 @@
 
 {% block content %}
 <section class="page-heading">
-    <p class="eyebrow">Training</p>
+    <p class="eyebrow">模型运营流程</p>
     <h1>模型训练</h1>
-    <p>选择模型后手动启动训练，系统会保存训练记录和最新模型文件，便于后续评估与推荐使用。</p>
+    <p>选择合适的算法并启动训练，系统会保存训练记录和最新模型文件，便于后续评估与推荐使用。</p>
 </section>
 
-<section class="grid cols-2">
-    <article class="card">
-        <span class="card-label">可用模型</span>
-        <h2>已接入模型</h2>
-        <ul class="plain-list">
-            {% for model in available_models %}
-            <li><code>{{ model }}</code></li>
-            {% endfor %}
-        </ul>
-    </article>
-    <article class="card">
-        <span class="card-label">训练接口</span>
-        <h2>POST /api/models/train</h2>
-        <p>页面按钮会调用该接口；保留接口示例便于调试和外部系统接入。</p>
-        <pre><code>{
-  "model_name": "logistic_regression"
-}</code></pre>
-    </article>
+<section class="workflow-strip" aria-label="模型运营流程">
+    <a class="workflow-step is-done" href="/data">
+        <span>1</span>
+        <strong>数据准备</strong>
+    </a>
+    <span class="workflow-step is-current" aria-current="step">
+        <span>2</span>
+        <strong>模型训练</strong>
+    </span>
+    <a class="workflow-step" href="/evaluate">
+        <span>3</span>
+        <strong>模型评估</strong>
+    </a>
+    <a class="workflow-step" href="/recommend">
+        <span>4</span>
+        <strong>推荐生成</strong>
+    </a>
 </section>
 
-<section class="panel">
+<section class="panel action-panel">
     <div class="section-title">
-        <h2>启动训练</h2>
+        <div>
+            <span class="card-label">训练控制台</span>
+            <h2>选择模型并开始训练</h2>
+            <p>训练完成后可直接查看评估指标并生成推荐名单。</p>
+        </div>
         <a class="text-link" href="/api/models/runs">运行记录 API</a>
+    </div>
+    <div class="model-option-grid" aria-label="可用模型说明">
+        <article class="model-option">
+            <strong>逻辑回归</strong>
+            <span>稳定、可解释，适合作为推荐基线。</span>
+        </article>
+        <article class="model-option">
+            <strong>决策树</strong>
+            <span>规则路径直观，便于理解客户分层。</span>
+        </article>
+        <article class="model-option">
+            <strong>随机森林</strong>
+            <span>综合表现更稳，适合最终推荐名单生成。</span>
+        </article>
     </div>
     <div class="form-row">
         <label for="model-name">
@@ -43,15 +60,18 @@
                 <option value="random_forest">随机森林</option>
             </select>
         </label>
-        <button id="train-model-button" class="button" type="button">训练模型</button>
+        <button id="train-model-button" class="button" type="button">开始训练</button>
     </div>
-    <div id="train-result" class="status-box" aria-live="polite"></div>
+    <div id="train-result" class="status-box is-empty" aria-live="polite">请选择模型后开始训练。训练会更新最新模型文件，历史记录会保留。</div>
 </section>
 
 <section class="panel">
     <div class="section-title">
-        <h2>最近一次训练</h2>
-        <a class="text-link" href="/api/models/evaluate">评估 API</a>
+        <div>
+            <span class="card-label">最近一次训练</span>
+            <h2>训练结果摘要</h2>
+        </div>
+        <a class="text-link" href="/evaluate">查看模型评估</a>
     </div>
     {% if latest_run %}
     <dl class="details">
@@ -63,6 +83,22 @@
     <p class="empty">暂无训练记录。调用训练 API 后，本页会展示当前进程中的最近一次运行。</p>
     {% endif %}
 </section>
+
+<details class="api-disclosure">
+    <summary>查看训练接口</summary>
+    <div class="api-disclosure-content">
+        <h2>POST /api/models/train</h2>
+        <p>页面按钮会调用该接口；保留接口示例便于调试和外部系统接入。</p>
+        <pre><code>{
+  "model_name": "logistic_regression"
+}</code></pre>
+        <p>当前已接入模型：
+            {% for model in available_models %}
+            <code>{{ model }}</code>{% if not loop.last %}、{% endif %}
+            {% endfor %}
+        </p>
+    </div>
+</details>
 {% endblock %}
 
 {% block scripts %}
@@ -117,6 +153,15 @@
             });
             result.appendChild(metricList);
         }
+        var nextAction = document.createElement("p");
+        nextAction.className = "status-action";
+        var link = document.createElement("a");
+        link.className = "text-link";
+        link.href = "/evaluate";
+        link.textContent = "查看模型评估";
+        nextAction.appendChild(link);
+        result.appendChild(nextAction);
+        result.className = "status-box is-success";
     }
 
     function parseJsonResponse(response) {
@@ -131,7 +176,9 @@
     button.addEventListener("click", function () {
         var modelName = select.value;
         button.disabled = true;
-        result.textContent = "训练中，请稍候...";
+        button.textContent = "训练中...";
+        result.className = "status-box is-loading";
+        result.textContent = "正在训练模型，这通常需要几秒钟。请保持当前页面打开。";
 
         fetch("/api/models/train", {
             method: "POST",
@@ -141,10 +188,12 @@
             .then(parseJsonResponse)
             .then(renderRun)
             .catch(function (error) {
-                result.textContent = error.detail || "训练失败，请稍后重试。";
+                result.className = "status-box is-error";
+                result.textContent = error.detail || "训练失败。请确认数据集已上传，并稍后重试。";
             })
             .then(function () {
                 button.disabled = false;
+                button.textContent = "开始训练";
             });
     });
 }());

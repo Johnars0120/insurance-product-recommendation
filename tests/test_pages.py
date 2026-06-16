@@ -143,6 +143,26 @@ def test_train_page_contains_training_api_contract(client):
         assert fragment in response.text
 
 
+def test_train_page_presents_productized_training_workflow(client):
+    response = client.get("/train")
+
+    assert response.status_code == 200
+    expected_fragments = [
+        "模型运营流程",
+        "数据准备",
+        "模型训练",
+        "模型评估",
+        "推荐生成",
+        "训练控制台",
+        "开始训练",
+        "训练完成后可直接查看评估指标并生成推荐名单。",
+        'class="status-box is-empty"',
+        'href="/evaluate"',
+    ]
+    for fragment in expected_fragments:
+        assert fragment in response.text
+
+
 def test_evaluate_page_contains_recent_runs_table(client):
     response = client.get("/evaluate")
 
@@ -162,6 +182,25 @@ def test_evaluate_page_contains_runs_api_contract(client):
         "<th>训练行数</th>",
         "<th>评估行数</th>",
         "<th>创建时间</th>",
+    ]
+    for fragment in expected_fragments:
+        assert fragment in response.text
+
+
+def test_evaluate_page_explains_metrics_and_next_action(client):
+    response = client.get("/evaluate")
+
+    assert response.status_code == 200
+    expected_fragments = [
+        "模型质量看板",
+        "用于判断当前模型是否适合进入推荐环节。",
+        "整体预测正确率",
+        "推荐名单准确性",
+        "潜在客户覆盖能力",
+        "准确性与覆盖率平衡",
+        "模型区分能力",
+        'href="/recommend"',
+        "生成推荐名单",
     ]
     for fragment in expected_fragments:
         assert fragment in response.text
@@ -198,6 +237,26 @@ def test_recommend_page_contains_prediction_api_contract(client):
         assert fragment in response.text
 
 
+def test_recommend_page_prioritizes_business_recommendation_flow(client):
+    response = client.get("/recommend")
+
+    assert response.status_code == 200
+    expected_fragments = [
+        "客户推荐工作台",
+        "建议 20-100 条，适合人工跟进与导出。",
+        "本次推荐结果",
+        "购买概率",
+        "高意向",
+        "中意向",
+        "低意向",
+        'class="button button-secondary"',
+        "导出 CSV",
+        'id="recommend-limit-error"',
+    ]
+    for fragment in expected_fragments:
+        assert fragment in response.text
+
+
 def test_static_css_route_returns_stylesheet():
     client = TestClient(app)
 
@@ -205,6 +264,18 @@ def test_static_css_route_returns_stylesheet():
 
     assert response.status_code == 200
     assert response.headers["content-type"].startswith("text/css")
+
+
+def test_static_css_keeps_secondary_button_hover_legible():
+    client = TestClient(app)
+
+    response = client.get("/static/css/main.css")
+
+    assert response.status_code == 200
+    css = response.text
+    assert ".button:not(.button-secondary):hover:not(:disabled)" in css
+    assert ".button-secondary:hover" in css
+    assert ".button-secondary:hover {\n    background: var(--surface-soft);\n    color: var(--accent-strong);" in css
 
 
 def test_page_get_routes_do_not_train_or_predict(monkeypatch):
