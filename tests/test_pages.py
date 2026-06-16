@@ -272,7 +272,7 @@ def test_static_css_keeps_secondary_button_hover_legible():
     response = client.get("/static/css/main.css")
 
     assert response.status_code == 200
-    css = response.text
+    css = response.text.replace("\r\n", "\n")
     assert ".button:not(.button-secondary):hover:not(:disabled)" in css
     assert ".button-secondary:hover" in css
     assert ".button-secondary:hover {\n    background: var(--surface-soft);\n    color: var(--accent-strong);" in css
