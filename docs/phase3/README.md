@@ -6,19 +6,18 @@
 
 - GitHub 仓库：<https://github.com/Johnars0120/insurance-product-recommendation>
 - 第三阶段起点：`origin/main`
-- 当前确认提交：`78406b1 docs: confirm recommendation contributor credit`
-- 当前总开发分支：`phase3/productization`
-- 基线测试：`python -m pytest -q`，结果为 `62 passed`
+- 当前确认提交：`31d5324 feat: harden data workflow for final validation`
+- 当前总开发分支：`main`
+- 最终测试：`python -m pytest -q`，结果为 `78 passed`
+- 健康检查：`GET /health` 返回 200
 
-## 三个合并角色
+## 第三阶段完成内容
 
-| 角色 | 建议分支 | 主要任务 | PR 目标 |
-| --- | --- | --- | --- |
-| 页面闭环 | `phase3/ui-workflow` | 在 `/train`、`/evaluate`、`/recommend` 页面完成训练、评估、推荐、历史、导出操作闭环 | 让答辩演示不依赖 Swagger 才能操作核心流程 |
-| 推荐解释 | `phase3/explain-recommendations` | 增强 `reason` 生成逻辑，提供更具体的推荐解释，并补充测试 | 让推荐结果更像业务系统输出 |
-| 交付验收 | `phase3/ci-docs-demo` | 增加 GitHub Actions、第三阶段测试记录、演示流程、截图清单和 PR 检查材料 | 让项目可复现、可审查、可交付 |
-
-这三个角色可以都由同一位开发者完成。建议仍然拆 3 个 PR，便于 GitHub 历史清晰；如果时间紧，可以在 `phase3/productization` 上连续提交后发一个总 PR。
+- 页面闭环：`/data`、`/train`、`/evaluate`、`/recommend` 已能支撑浏览器完整演示。
+- 推荐解释：推荐结果包含购买概率、推荐等级和推荐理由。
+- 数据隔离：上传数据写入 `data/runtime/`，不覆盖 `data/raw/` 样例数据。
+- 模型版本化：训练模型保存为 `saved_models/{run_id}.joblib`，同时维护 `latest_model.joblib`。
+- 交付验收：已补齐截图、测试记录、演示流程和算法实验说明。
 
 ## 开发前命令
 
@@ -26,7 +25,6 @@
 git fetch origin
 git switch main
 git pull origin main
-git switch -c phase3/productization origin/main
 python -m pytest -q
 ```
 
@@ -49,6 +47,9 @@ python -m pytest -q
 - CI 自动测试：[.github/workflows/tests.yml](../../.github/workflows/tests.yml)
 - 测试记录：[docs/第三阶段测试记录.md](../第三阶段测试记录.md)
 - 演示流程：[docs/第三阶段演示流程.md](../第三阶段演示流程.md)
+- 答辩演示流程：[docs/答辩演示流程.md](../答辩演示流程.md)
+- 算法实验补充说明：[docs/算法实验补充说明.md](../算法实验补充说明.md)
+- 验收截图：`docs/screenshots/`
 
 ## 每个 PR 必填内容
 
