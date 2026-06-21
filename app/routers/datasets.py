@@ -1,4 +1,6 @@
-from fastapi import APIRouter, File, HTTPException, UploadFile
+import os
+
+from fastapi import APIRouter, File, Header, HTTPException, UploadFile
 
 from app.services.dataset_service import build_dataset_profile, save_uploaded_datasets
 
@@ -15,7 +17,12 @@ def get_dataset_profile():
 async def upload_datasets(
     train_file: UploadFile = File(...),
     eval_file: UploadFile = File(...),
+    x_admin_token: str | None = Header(default=None),
 ):
+    expected_token = os.getenv("INSURANCE_RECOMMENDATION_ADMIN_TOKEN")
+    if expected_token and x_admin_token != expected_token:
+        raise HTTPException(status_code=403, detail="Invalid admin token")
+
     try:
         profile = save_uploaded_datasets(
             train_bytes=await train_file.read(),

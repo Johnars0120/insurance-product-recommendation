@@ -166,16 +166,23 @@ http://127.0.0.1:8000/data
 - 两个文件都包含目标字段 `移动房车险数量`
 - 训练集和评估集的特征字段保持一致
 
-上传成功后，系统会替换当前数据文件并清理最新模型文件。请重新训练模型后再查看评估和推荐结果。
+上传成功后，系统会把新数据写入运行时目录并清理已生成的模型文件。仓库自带的样例数据不会被覆盖；请重新训练模型后再查看评估和推荐结果。
 
-项目默认数据文件位置：
+项目自带样例数据文件位置：
 
 ```text
 data/raw/data.xlsx
 data/raw/eval.xlsx
 ```
 
-如果需要替换数据文件，建议保持文件名不变，并确保训练集和评估集都包含目标字段：
+上传后的运行时数据文件位置：
+
+```text
+data/runtime/data.xlsx
+data/runtime/eval.xlsx
+```
+
+如果需要手动替换运行时数据文件，建议保持文件名不变，并确保训练集和评估集都包含目标字段：
 
 ```text
 移动房车险数量
@@ -197,9 +204,10 @@ http://127.0.0.1:8000/train
 | `decision_tree` | 决策树，便于解释规则和特征划分 |
 | `random_forest` | 随机森林，适合提升整体预测稳定性 |
 
-训练完成后，系统会保存模型文件和训练记录：
+训练完成后，系统会按训练批次保存模型文件和训练记录，同时维护一个最新模型别名：
 
 ```text
+saved_models/{run_id}.joblib
 saved_models/latest_model.joblib
 ```
 
@@ -274,7 +282,13 @@ train_file: 训练集 .xlsx 文件
 eval_file: 评估集 .xlsx 文件
 ```
 
-上传成功后，系统会替换当前训练集和评估集，并清理最新模型文件。请重新训练模型后再生成推荐结果。
+上传成功后，系统会写入 `data/runtime/` 下的训练集和评估集，并清理所有已生成模型文件。请重新训练模型后再生成推荐结果。
+
+如果设置了环境变量 `INSURANCE_RECOMMENDATION_ADMIN_TOKEN`，上传接口需要携带同值请求头：
+
+```http
+X-Admin-Token: your-token
+```
 
 ### 训练模型
 
@@ -448,6 +462,7 @@ insurance-product-recommendation/
 │  ├─ raw/
 │  │  ├─ data.xlsx
 │  │  └─ eval.xlsx
+│  ├─ runtime/
 │  ├─ processed/
 │  └─ output/
 ├─ docs/
@@ -468,9 +483,10 @@ insurance-product-recommendation/
 | `app/models/` | 数据库模型定义 |
 | `app/templates/` | Jinja2 页面模板 |
 | `app/static/` | CSS 等静态资源 |
-| `data/raw/` | 原始 Excel 数据 |
+| `data/raw/` | 仓库自带样例 Excel 数据 |
+| `data/runtime/` | 上传后的本地运行时数据，已通过 `.gitignore` 排除 |
 | `docs/` | 项目文档、测试记录和使用流程 |
-| `saved_models/` | 本地训练模型输出目录 |
+| `saved_models/` | 本地训练模型输出目录，模型文件已通过 `.gitignore` 排除 |
 | `tests/` | 自动化测试用例 |
 
 ## 项目文档

@@ -31,6 +31,7 @@ saved_models/*.joblib
 saved_models/*.pkl
 
 # Generated data
+data/runtime/
 data/processed/
 data/output/
 

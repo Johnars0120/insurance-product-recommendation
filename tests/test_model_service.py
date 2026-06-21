@@ -81,9 +81,22 @@ def test_train_baseline_model_returns_metrics_and_model_path_for_supported_model
         assert result["run_id"]
         assert result["train_rows"] == len(model_files["train_data"])
         assert result["eval_rows"] == len(model_files["eval_data"])
-        assert result["model_path"].endswith("latest_model.joblib")
+        assert result["model_path"].endswith(f"{result['run_id']}.joblib")
         assert result["model_path"].startswith(str(model_files["saved_model_dir"]))
         _assert_metric_ranges(result["metrics"])
+
+
+def test_train_baseline_model_saves_versioned_model_and_latest_alias(model_files):
+    result = model_service.train_baseline_model(model_name="logistic_regression")
+
+    run_model_path = model_files["saved_model_dir"] / f"{result['run_id']}.joblib"
+    latest_model_path = model_files["saved_model_dir"] / "latest_model.joblib"
+
+    assert result["model_path"] == str(run_model_path)
+    assert run_model_path.exists()
+    assert latest_model_path.exists()
+    assert joblib.load(run_model_path)["run_id"] == result["run_id"]
+    assert joblib.load(latest_model_path)["run_id"] == result["run_id"]
 
 
 def test_train_baseline_model_saves_predictable_joblib_bundle(model_files):
@@ -107,6 +120,30 @@ def test_train_baseline_model_saves_predictable_joblib_bundle(model_files):
     assert bundle["run_id"] == result["run_id"]
     assert bundle["created_at"] == result["created_at"]
     assert hasattr(bundle["model"], "predict")
+
+
+def test_train_baseline_model_handles_categorical_features_and_missing_values(
+    model_files, monkeypatch, tmp_path
+):
+    train_data = model_files["train_data"].copy()
+    eval_data = model_files["eval_data"].copy()
+    train_data["region"] = ["east", "west", "east", None, "north", "west"]
+    eval_data["region"] = ["east", None, "north", "west"]
+    train_data.loc[1, "income"] = None
+    eval_data.loc[2, "claims"] = None
+    train_file = tmp_path / "train_categorical.xlsx"
+    eval_file = tmp_path / "eval_categorical.xlsx"
+    train_data.to_excel(train_file, index=False)
+    eval_data.to_excel(eval_file, index=False)
+    monkeypatch.setattr(model_service, "TRAIN_DATA_FILE", train_file)
+    monkeypatch.setattr(model_service, "EVAL_DATA_FILE", eval_file)
+
+    result = model_service.train_baseline_model(model_name="logistic_regression")
+    recommendations = model_service.predict_recommendations(limit=2)
+
+    assert result["run_id"]
+    assert "region" in joblib.load(result["model_path"])["feature_columns"]
+    assert recommendations["count"] == 2
 
 
 def test_train_baseline_model_validates_eval_feature_schema(model_files, monkeypatch, tmp_path):

@@ -3,7 +3,13 @@ import tempfile
 
 import pandas as pd
 
-from app.config import EVAL_DATA_FILE, TARGET_COLUMN, TRAIN_DATA_FILE
+from app.config import (
+    DEFAULT_EVAL_DATA_FILE,
+    DEFAULT_TRAIN_DATA_FILE,
+    EVAL_DATA_FILE,
+    TARGET_COLUMN,
+    TRAIN_DATA_FILE,
+)
 from app.services import model_service
 
 
@@ -51,6 +57,20 @@ def _replace_dataset_file(file_path, data):
     temp_path.replace(file_path)
 
 
+def _resolve_dataset_file(runtime_file, default_file):
+    if Path(runtime_file).exists():
+        return Path(runtime_file)
+    return Path(default_file)
+
+
+def get_train_data_file():
+    return _resolve_dataset_file(TRAIN_DATA_FILE, DEFAULT_TRAIN_DATA_FILE)
+
+
+def get_eval_data_file():
+    return _resolve_dataset_file(EVAL_DATA_FILE, DEFAULT_EVAL_DATA_FILE)
+
+
 def save_uploaded_datasets(train_bytes, train_filename, eval_bytes, eval_filename):
     train_data = _read_uploaded_dataset(train_bytes, train_filename)
     eval_data = _read_uploaded_dataset(eval_bytes, eval_filename)
@@ -92,8 +112,8 @@ def summarize_dataset(file_path):
 
 
 def build_dataset_profile():
-    train = summarize_dataset(TRAIN_DATA_FILE)
-    eval_data = summarize_dataset(EVAL_DATA_FILE)
+    train = summarize_dataset(get_train_data_file())
+    eval_data = summarize_dataset(get_eval_data_file())
     feature_columns = [
         column for column in train["columns_list"] if column != TARGET_COLUMN
     ]

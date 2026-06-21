@@ -3,14 +3,23 @@ from uuid import uuid4
 
 import joblib
 import pandas as pd
+from sklearn.compose import ColumnTransformer
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.linear_model import LogisticRegression
 from sklearn.metrics import accuracy_score, f1_score, precision_score, recall_score, roc_auc_score
 from sklearn.pipeline import Pipeline
-from sklearn.preprocessing import StandardScaler
+from sklearn.impute import SimpleImputer
+from sklearn.preprocessing import OneHotEncoder, StandardScaler
 from sklearn.tree import DecisionTreeClassifier
 
-from app.config import EVAL_DATA_FILE, SAVED_MODEL_DIR, TARGET_COLUMN, TRAIN_DATA_FILE
+from app.config import (
+    DEFAULT_EVAL_DATA_FILE,
+    DEFAULT_TRAIN_DATA_FILE,
+    EVAL_DATA_FILE,
+    SAVED_MODEL_DIR,
+    TARGET_COLUMN,
+    TRAIN_DATA_FILE,
+)
 from app.services import history_service
 
 
@@ -18,36 +27,36 @@ LATEST_RUN = None
 SUPPORTED_MODELS = ("logistic_regression", "decision_tree", "random_forest")
 
 
+def _resolve_dataset_file(runtime_file, default_file):
+    if runtime_file.exists():
+        return runtime_file
+    return default_file
+
+
 def _load_training_data():
-    train_data = pd.read_excel(TRAIN_DATA_FILE)
-    eval_data = pd.read_excel(EVAL_DATA_FILE)
+    train_data_file = _resolve_dataset_file(TRAIN_DATA_FILE, DEFAULT_TRAIN_DATA_FILE)
+    eval_data_file = _resolve_dataset_file(EVAL_DATA_FILE, DEFAULT_EVAL_DATA_FILE)
+    train_data = pd.read_excel(train_data_file)
+    eval_data = pd.read_excel(eval_data_file)
 
     if TARGET_COLUMN not in train_data.columns:
-        raise ValueError(f"Target column '{TARGET_COLUMN}' not found in {TRAIN_DATA_FILE.name}")
+        raise ValueError(f"Target column '{TARGET_COLUMN}' not found in {train_data_file.name}")
     if TARGET_COLUMN not in eval_data.columns:
-        raise ValueError(f"Target column '{TARGET_COLUMN}' not found in {EVAL_DATA_FILE.name}")
+        raise ValueError(f"Target column '{TARGET_COLUMN}' not found in {eval_data_file.name}")
 
     feature_columns = [column for column in train_data.columns if column != TARGET_COLUMN]
     return train_data, eval_data, feature_columns
 
 
-def _build_model(model_name):
+def _build_estimator(model_name):
     if model_name not in SUPPORTED_MODELS:
         raise ValueError(f"Unsupported model_name: {model_name}")
 
     if model_name == "logistic_regression":
-        return Pipeline(
-            steps=[
-                ("scaler", StandardScaler()),
-                (
-                    "classifier",
-                    LogisticRegression(
-                        class_weight="balanced",
-                        max_iter=1000,
-                        random_state=42,
-                    ),
-                ),
-            ]
+        return LogisticRegression(
+            class_weight="balanced",
+            max_iter=1000,
+            random_state=42,
         )
 
     if model_name == "decision_tree":
@@ -62,6 +71,55 @@ def _build_model(model_name):
         n_estimators=100,
         max_depth=8,
         random_state=42,
+    )
+
+
+def _build_preprocessor(features):
+    numeric_features = list(features.select_dtypes(include=["number", "bool"]).columns)
+    categorical_features = [
+        column for column in features.columns if column not in numeric_features
+    ]
+    transformers = []
+
+    if numeric_features:
+        transformers.append(
+            (
+                "numeric",
+                Pipeline(
+                    steps=[
+                        ("imputer", SimpleImputer(strategy="median")),
+                        ("scaler", StandardScaler()),
+                    ]
+                ),
+                numeric_features,
+            )
+        )
+    if categorical_features:
+        transformers.append(
+            (
+                "categorical",
+                Pipeline(
+                    steps=[
+                        ("imputer", SimpleImputer(strategy="most_frequent")),
+                        ("encoder", OneHotEncoder(handle_unknown="ignore")),
+                    ]
+                ),
+                categorical_features,
+            )
+        )
+
+    if not transformers:
+        raise ValueError("Training data must contain at least one feature column")
+
+    return ColumnTransformer(transformers=transformers)
+
+
+def _build_model(model_name, train_features):
+    return Pipeline(
+        steps=[
+            ("preprocessor", _build_preprocessor(train_features)),
+            ("classifier", _build_estimator(model_name)),
+        ]
     )
 
 
@@ -82,6 +140,10 @@ def _validate_eval_features(eval_data, feature_columns):
 
 def _latest_model_path():
     return SAVED_MODEL_DIR / "latest_model.joblib"
+
+
+def _run_model_path(run_id):
+    return SAVED_MODEL_DIR / f"{run_id}.joblib"
 
 
 def _build_run_metadata(model_name):
@@ -197,7 +259,6 @@ def train_baseline_model(model_name="logistic_regression"):
 
     run_metadata = _build_run_metadata(model_name)
     train_data, eval_data, feature_columns = _load_training_data()
-    model = _build_model(model_name)
 
     train_features = train_data[feature_columns]
     train_target = _target_to_binary(train_data[TARGET_COLUMN])
@@ -205,6 +266,7 @@ def train_baseline_model(model_name="logistic_regression"):
     eval_features = eval_data[feature_columns]
     eval_target = _target_to_binary(eval_data[TARGET_COLUMN])
     _validate_auc_target(eval_target)
+    model = _build_model(model_name, train_features)
 
     model.fit(train_features, train_target)
 
@@ -219,7 +281,8 @@ def train_baseline_model(model_name="logistic_regression"):
     }
 
     SAVED_MODEL_DIR.mkdir(parents=True, exist_ok=True)
-    model_path = SAVED_MODEL_DIR / "latest_model.joblib"
+    model_path = _run_model_path(run_metadata["run_id"])
+    latest_model_path = _latest_model_path()
     run_summary = {
         "run_id": run_metadata["run_id"],
         "model_name": model_name,
@@ -241,6 +304,7 @@ def train_baseline_model(model_name="logistic_regression"):
         },
         model_path,
     )
+    joblib.dump(joblib.load(model_path), latest_model_path)
 
     LATEST_RUN = history_service.save_model_run(run_summary)
     return LATEST_RUN
@@ -273,7 +337,7 @@ def predict_recommendations(limit=20):
         raise ValueError("limit must be positive")
 
     bundle, run_id = _load_prediction_bundle_and_run_id()
-    eval_data = pd.read_excel(EVAL_DATA_FILE)
+    eval_data = pd.read_excel(_resolve_dataset_file(EVAL_DATA_FILE, DEFAULT_EVAL_DATA_FILE))
     feature_columns = bundle["feature_columns"]
     _validate_eval_features(eval_data, feature_columns)
 
@@ -323,7 +387,8 @@ def reset_latest_run():
 
 
 def clear_latest_model_file():
-    model_path = _latest_model_path()
-    if model_path.exists():
-        model_path.unlink()
+    if SAVED_MODEL_DIR.exists():
+        for pattern in ("*.joblib", "*.pkl"):
+            for model_path in SAVED_MODEL_DIR.glob(pattern):
+                model_path.unlink()
     reset_latest_run()
