@@ -47,7 +47,6 @@ python -m pytest -q
 - CI 自动测试：[.github/workflows/tests.yml](../../.github/workflows/tests.yml)
 - 测试记录：[docs/第三阶段测试记录.md](../第三阶段测试记录.md)
 - 演示流程：[docs/第三阶段演示流程.md](../第三阶段演示流程.md)
-- 答辩演示流程：[docs/答辩演示流程.md](../答辩演示流程.md)
 - 算法实验补充说明：[docs/算法实验补充说明.md](../算法实验补充说明.md)
 - 验收截图：`docs/screenshots/`
 

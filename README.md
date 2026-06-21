@@ -516,7 +516,6 @@ insurance-product-recommendation/
 
 - [接口说明](docs/接口说明.md)
 - [算法实验补充说明](docs/算法实验补充说明.md)
-- [答辩演示流程](docs/答辩演示流程.md)
 - [开发任务看板](docs/开发任务看板.md)
 - [协同开发说明](docs/协同开发说明.md)
 - [第二阶段测试记录](docs/第二阶段测试记录.md)
